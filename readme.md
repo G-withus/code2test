@@ -1,3 +1,3 @@
 ```
-test pipeline1
+test pipeline
 ```
