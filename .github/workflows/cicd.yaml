@@ -5,27 +5,27 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
-      - 'portregistration/**'
-      - 'backend/**'
+      - 'Frontend/**'
+      - 'Portregistration/**'
+      - 'Backend/**'
       - 'docker-compose.yml'
-      - 'frontend/Dockerfile'
-      - 'portregistration/Dockerfile'
-      - 'backend/Dockerfile'
-      - 'backend/config/application-docker.properties'
+      - 'Frontend/Dockerfile'
+      - 'Portregistration/Dockerfile'
+      - 'Backend/Dockerfile'
+      - 'Backend/config/application-docker.properties'
       - '.github/workflows/**'
   pull_request:
     branches:
       - main
     paths:
-      - 'frontend/**'
-      - 'portregistration/**'
-      - 'backend/**'
+      - 'Frontend/**'
+      - 'Portregistration/**'
+      - 'Backend/**'
       - 'docker-compose.yml'
-      - 'frontend/Dockerfile'
-      - 'portregistration/Dockerfile'
-      - 'backend/Dockerfile'
-      - 'backend/config/application-docker.properties'
+      - 'Frontend/Dockerfile'
+      - 'Portregistration/Dockerfile'
+      - 'Backend/Dockerfile'
+      - 'Backend/config/application-docker.properties'
       - '.github/workflows/**'
 
 jobs:
@@ -39,42 +39,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build frontend image
-<<<<<<< HEAD
-        run: |
-          docker build -t communication-test-frontend:latest ./Frontend
-        working-directory: ./
+      - name: Build Frontend image
+        run: docker build -t communication-test-frontend:latest ./Frontend
 
-      - name: Build portregistration image
-        run: |
-          docker build -t communication-test-portregistration:latest ./Portregistration
-        working-directory: ./
+      - name: Build Portregistration image
+        run: docker build -t communication-test-portregistration:latest ./Portregistration
 
-      - name: Build backend image
-        run: |
-          docker build -t communication-test-backend:latest ./Backend
-        working-directory: ./
-
-      # Step 4: Pull MySQL image
-      - name: Pull MySQL image
-        run: |
-          docker pull mysql:8.0
-
-      # Step 5: Clean up Docker on runner
-      - name: Clean up Docker after build
-        run: |
-          docker system prune -a -f
-          docker volume prune -f
-          docker builder prune -a -f
-=======
-        run: docker build -t communication-test-frontend:latest ./frontend
-
-      - name: Build portregistration image
-        run: docker build -t communication-test-portregistration:latest ./portregistration
-
-      - name: Build backend image
-        run: docker build -t communication-test-backend:latest ./backend
->>>>>>> 558ace8fe8c8cd99551d3bfd697748411b14e634
+      - name: Build Backend image
+        run: docker build -t communication-test-backend:latest ./Backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -99,7 +71,7 @@ jobs:
       - name: Copy project files to EC2
         run: |
           scp -i ec2_key -o StrictHostKeyChecking=no -r \
-            frontend portregistration backend docker-compose.yml \
+            Frontend Portregistration Backend docker-compose.yml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/communication-test/
 
       - name: Deploy to EC2
