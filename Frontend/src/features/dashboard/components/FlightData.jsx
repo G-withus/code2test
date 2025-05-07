@@ -20,7 +20,7 @@ const FlightData = () => {
     let timeout;
     const connectWebSocket=()=>{
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://3.34.40.154:8081/telemetry";
+      const wsUrl = "ws://3.34.40.154:8080/telemetry";
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen=()=>{
