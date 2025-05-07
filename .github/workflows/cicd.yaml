@@ -42,17 +42,17 @@ jobs:
       # Step 3: Build Docker images
       - name: Build frontend image
         run: |
-          docker build -t communication-test-frontend:latest ./frontend
+          docker build -t communication-test-frontend:latest ./Frontend
         working-directory: ./
 
       - name: Build portregistration image
         run: |
-          docker build -t communication-test-portregistration:latest ./portregistration
+          docker build -t communication-test-portregistration:latest ./Portregistration
         working-directory: ./
 
       - name: Build backend image
         run: |
-          docker build -t communication-test-backend:latest ./backend
+          docker build -t communication-test-backend:latest ./Backend
         working-directory: ./
 
       # Step 4: Pull MySQL image
