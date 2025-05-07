@@ -1,0 +1,161 @@
+name: CI/CD to EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'portregistration/**'
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - 'frontend/Dockerfile'
+      - 'portregistration/Dockerfile'
+      - 'backend/Dockerfile'
+      - 'backend/config/application-docker.properties'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'portregistration/**'
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - 'frontend/Dockerfile'
+      - 'portregistration/Dockerfile'
+      - 'backend/Dockerfile'
+      - 'backend/config/application-docker.properties'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Build Docker images
+      - name: Build frontend image
+        run: |
+          docker build -t communication-test-frontend:latest ./frontend
+        working-directory: ./
+
+      - name: Build portregistration image
+        run: |
+          docker build -t communication-test-portregistration:latest ./portregistration
+        working-directory: ./
+
+      - name: Build backend image
+        run: |
+          docker build -t communication-test-backend:latest ./backend
+        working-directory: ./
+
+      # Step 4: Pull MySQL image
+      - name: Pull MySQL image
+        run: |
+          docker pull mysql:8.0
+
+      # Step 5: Clean up Docker on runner
+      - name: Clean up Docker after build
+        run: |
+          docker system prune -a -f
+          docker volume prune -f
+          docker builder prune -a -f
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up SSH key for EC2
+      - name: Install SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$EC2_SSH_KEY" > ec2_key
+          chmod 600 ec2_key
+
+      # Step 3: Copy project files to EC2
+      - name: Copy files to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          scp -i ec2_key -o StrictHostKeyChecking=no -r \
+            ./* \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/communication-test/
+
+      # Step 4: Deploy to EC2
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ec2_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Backup current project folder
+            if [ -d "/home/${{ secrets.EC2_USER }}/communication-test" ]; then
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              mv /home/${{ secrets.EC2_USER }}/communication-test /home/${{ secrets.EC2_USER }}/communication-test-backup-$TIMESTAMP
+            fi
+
+            # Ensure project directory exists
+            mkdir -p /home/${{ secrets.EC2_USER }}/communication-test
+            cd /home/${{ secrets.EC2_USER }}/communication-test
+
+            # Clean up disk space
+            sudo apt-get clean
+            sudo rm -rf /root/.npm /home/${{ secrets.EC2_USER }}/.npm
+            docker system prune -a -f
+            docker volume prune -f
+            docker builder prune -a -f
+
+            # Remove all previous Docker images
+            if [ -n "$(docker images -q)" ]; then
+              docker rmi $(docker images -q) -f
+            else
+              echo "No Docker images to remove."
+            fi
+
+            # Check and install Docker if not present
+            if ! command -v docker &> /main/null; then
+              echo "Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ${{ secrets.EC2_USER }}
+            else
+              echo "Docker already installed, skipping installation."
+            fi
+
+            # Check and install Docker Compose if not present
+            if ! command -v docker-compose &> /main/null; then
+              echo "Installing Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            else
+              echo "Docker Compose already installed, skipping installation."
+            fi
+
+            # Deploy with Docker Compose
+            docker compose down
+            docker compose up --build -d
+
+            # Final cleanup
+            docker system prune -a -f
+          EOF
+
+      # Step 5: Clean up SSH key
+      - name: Clean up
+        if: always()
+        run: |
+          rm -f ec2_key

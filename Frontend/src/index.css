@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* //overview and register */
+/* Add Tailwind CSS styles in your main CSS file if needed */
+.button {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 600; /* font-semibold */
+    position: relative;
+    padding: 0.5rem 1rem;
+    transition: color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  }
+  
+::-webkit-scrollbar{
+  display: none;
+}
+
+@media print {
+  body * {
+      visibility: hidden;
+  }
+  #printArea, #printArea * {
+      visibility: visible;
+  }
+  #printArea {
+    /* position:absolute; */
+      left: 0;
+      top: 0;
+  }
+}
