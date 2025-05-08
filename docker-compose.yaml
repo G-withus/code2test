@@ -1,5 +1,3 @@
-
-
 services:
   frontend:
     build:
@@ -31,35 +29,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-      - "15000-15049:15000-15049/udp"
-      - "15050-15099:15050-15099/udp"
-      - "15100-15149:15100-15149/udp"
-    depends_on:
-      - mysqldb
+      - "14000-14500:14000-14500/udp"
+      - "14500-15000:14500-15000/udp"
+      - "15000-15500:15000-15500/udp"
+      - "15500-16000:15500-16000/udp"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     networks:
       - testmdt-network
     restart: unless-stopped
-
-  mysqldb:
-    image: mysql:8.0  # Pinned version instead of 'latest'
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=manage_port
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=apppassword
-    volumes:
-      - mysqldb-data:/var/lib/mysql
-    ports:
-      - "3306:3306"  # Exposed for debugging (remove in production)
-    networks:
-      - testmdt-network
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
-
-volumes:
-  mysqldb-data:
 
 networks:
   testmdt-network:
