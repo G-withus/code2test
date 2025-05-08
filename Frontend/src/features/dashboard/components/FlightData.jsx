@@ -1,19 +1,11 @@
-import { useDispatch, useSelector } from "react-redux";
+
 import Pagination from "../../../components/Pagination";
-import { useEffect,useRef } from "react";
-import { fetchFlightData } from "../../../stores/flightData/flightData";
+import { useEffect,useRef,useState } from "react";
+
 import Container from "../../../components/Container";
 const FlightData = () => {
-  // const dispatch=useDispatch();
-  // const {flightData,loading,error}= useSelector(
-  //   (state)=>state.flightData || {}
-  // );
-  // useEffect(()=>{
-  //   dispatch(fetchFlightData());
-  // },[dispatch]);
-  // console.log("Flight Data",flightData);
-  // if(loading) return <p>Loading....</p>
-  // if(error) return <p>error</p>
+
+  const [telemetryData, setTelemetryData] = useState([]);
   const reconnectInterval = useRef(null);
   const ws =useRef(null);
   useEffect(()=>{
@@ -36,6 +28,7 @@ const FlightData = () => {
       try{
         const data=JSON.parse(event.data);
         console.log("websocket data:",data);
+        setTelemetryData(data);
       }catch(error){
         console.error("Error parsing websocket data:",error)
       }
@@ -74,9 +67,7 @@ const FlightData = () => {
           <th className="px-2 py-4 text-center text-sm font-medium text-gray-600">
             Drone ID
           </th>
-          <th className="px-2 py-4 text-center text-sm font-medium text-gray-600">
-            Vessels
-          </th>
+          
           <th className="px-2 py-4 text-center text-sm font-medium text-gray-600">
             Alt
           </th>
@@ -98,28 +89,26 @@ const FlightData = () => {
           <th className="px-2 py-4 text-center text-sm font-medium text-gray-600">
             Battery (V)
           </th>
-          <th className="px-2 py-4 text-center text-sm font-medium text-gray-600">
-            CH3OUT
-          </th>
+         
         </tr>
       </thead>
       <tbody>
         {/* Add your dynamic table rows here */}
-        {/* {data.map((data,i)=>(
+         {telemetryData?.drones?.map((data,i)=>(
           <tr key={i}>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.date_time}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.droneId}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.vessels}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.alt}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.lat}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.lon}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.wind_vel}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{data.timestamp}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{data.system_id}</td>
+         
+          <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.alt).toFixed(5)} {`N`}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.lat).toFixed(5)} {`S`}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.lon).toFixed(2)}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.wind_vel).toFixed(2)}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{data.time_in_air}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{data.gps_hdop}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.battery}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.ch3out}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{data.battery_voltage}</td>
+         
         </tr>
-        ))} */}
+        ))} 
         
         {/* Add more rows here */}
       </tbody>
