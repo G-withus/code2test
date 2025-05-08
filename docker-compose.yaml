@@ -31,7 +31,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-      - "14000-15000:14000:15000/udp"
+      - "15000-15049:15000-15049/udp"
+      - "15050-15099:15050-15099/udp"
+      - "15100-15149:15100-15149/udp"
     depends_on:
       - mysqldb
     environment:
