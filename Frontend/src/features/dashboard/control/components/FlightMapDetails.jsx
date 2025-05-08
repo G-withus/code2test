@@ -19,7 +19,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
 
     const remoteVideoRef = useRef(null);
-    const server = "ws://43.201.9.168:8188"; // Janus WebSocket Server
+    const server = "ws://13.213.46.108:8188"; // Janus WebSocket Server
     const streamId = 1;
     const secret = "adminpwd";
 
@@ -306,14 +306,14 @@ const VideoViewer = ({setVideoView, systemID}) => {
           return shipIcons[hash % shipIcons.length];
         };
         
-        const shipsWithIcons = useMemo(() => {
-          return Object.entries(shipPosition).map((ship, index) => ({
-            ...ship,
-            icon: getShipIcon(index),
-          }));
-        }, [shipPosition]);
+        // const shipsWithIcons = useMemo(() => {
+        //   return Object.entries(shipPosition).map((ship, index) => ({
+        //     ...ship,
+        //     icon: getShipIcon(index),
+        //   }));
+        // }, [shipPosition]);
 
-        console.log(shipsWithIcons)
+        // console.log(shipsWithIcons)
       
 
     // Handle zoom for each video
