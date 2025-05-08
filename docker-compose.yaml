@@ -45,7 +45,7 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=manage_port
-      - MYSQL_USER=appuser
+      - MYSQL_USER=root
       - MYSQL_PASSWORD=apppassword
     volumes:
       - mysqldb-data:/var/lib/mysql
