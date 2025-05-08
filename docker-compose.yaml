@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-      - "10000:16000/udp"
+      - "10000:20000/udp"
       
     environment:
       - SPRING_PROFILES_ACTIVE=prod
