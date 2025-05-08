@@ -30,8 +30,8 @@ services:
       context: ./Backend
       dockerfile: Dockerfile
     ports:
-      - "10000-16000:10000:16000/udp"
       - "8080:8080"
+      - "10000-16000:10000:16000/udp"
     depends_on:
       - mysqldb
     environment:
