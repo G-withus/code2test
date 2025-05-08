@@ -81,7 +81,7 @@ jobs:
             docker compose up --build -d
 
             # Clean up unused Docker resources
-            docker system prune -f
+            docker system prune -a -f
           EOF
 
       - name: Clean up SSH key
