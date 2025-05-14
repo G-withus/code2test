@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/ports")
@@ -21,7 +22,12 @@ public class PortManagementController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterIpWithPortsRequest request) {
-        return portManagementService.registerIpWithPort(request);
+        try {
+            String message = portManagementService.registerIpWithPort(request);
+            return ResponseEntity.ok(message);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
     }
 
     @GetMapping("/list")
@@ -29,14 +35,25 @@ public class PortManagementController {
         return portManagementService.getAllSimple();
     }
 
-
     @PutMapping("/update/{id}")
     public ResponseEntity<String> update(@PathVariable Long id, @RequestBody RegisterIpWithPortsRequest request) {
-        return portManagementService.updateIpWithPort(id, request);
+        try {
+            String message = portManagementService.updateIpWithPort(id, request);
+            return ResponseEntity.ok(message);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        return portManagementService.deleteSenderEndPoint(id);
+        try {
+            String message = portManagementService.deleteSenderEndPoint(id);
+            return ResponseEntity.ok(message);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
     }
 }

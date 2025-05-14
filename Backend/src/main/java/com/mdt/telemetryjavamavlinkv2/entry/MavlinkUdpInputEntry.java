@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
@@ -36,8 +37,18 @@ public class MavlinkUdpInputEntry {
     public void init() {
         List<Integer> existingPorts = portManagementManager.getAllRegisteredPorts();
         startListeningOnPorts(existingPorts);
+        createLogDirectory();
     }
 
+    private void createLogDirectory() {
+        File logDir = new File("telemetry_logs");
+        if (!logDir.exists()) {
+            boolean created = logDir.mkdir();
+            if (created) {
+                System.out.println("📁 Log directory created.");
+            }
+        }
+    }
     public synchronized void startListeningOnPorts(List<Integer> ports) {
         portManagementManager.loadAllowedSenderPortsFromDB();
 
@@ -53,7 +64,7 @@ public class MavlinkUdpInputEntry {
                 try {
                     bindAddresses.add(InetAddress.getByName("0.0.0.0"));
                 } catch (UnknownHostException e) {
-                    System.err.printf("❌ Error binding to 0.0.0.0 for port %d: %s%n", port, e.getMessage());
+                    System.err.printf("Error binding to 0.0.0.0 for port %d: %s%n", port, e.getMessage());
                     continue;
                 }
             }
@@ -66,7 +77,7 @@ public class MavlinkUdpInputEntry {
             });
 
             activeListeningPorts.put(port, future);
-            System.out.println("✅ Started listening on port: " + port);
+            System.out.println("Started listening on port: " + port);
         }
     }
 
@@ -75,7 +86,7 @@ public class MavlinkUdpInputEntry {
         Future<?> future = activeListeningPorts.remove(port);
         if (future != null) {
             future.cancel(true);
-            System.out.println("🛑 Stopped listening on port: " + port);
+            System.out.println("Stopped listening on port: " + port);
         }
     }
 

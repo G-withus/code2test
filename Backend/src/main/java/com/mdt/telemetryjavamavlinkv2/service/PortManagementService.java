@@ -7,7 +7,6 @@ import com.mdt.telemetryjavamavlinkv2.model.SenderEndPoint;
 import com.mdt.telemetryjavamavlinkv2.repository.SenderEndPointRepository;
 import com.mdt.telemetryjavamavlinkv2.utils.PortManagementManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,17 +20,17 @@ public class PortManagementService {
     private final PortManagementManager portManagementManager;
     private final MavlinkUdpInputEntry mavlinkUdpInputEntry;
 
-    public ResponseEntity<String> registerIpWithPort(RegisterIpWithPortsRequest request) {
+    public String registerIpWithPort(RegisterIpWithPortsRequest request) {
         Integer port = Integer.valueOf(request.getPort());
 
         Optional<SenderEndPoint> portExists = senderEndPointRepository.findByPort(port);
         if (portExists.isPresent()) {
-            return ResponseEntity.status(409).body("Port " + port + " is already registered");
+            throw new IllegalStateException("Port " + port + " is already registered");
         }
 
         Optional<SenderEndPoint> ipExists = senderEndPointRepository.findByIpAddress(request.getIpAddress());
         if (ipExists.isPresent()) {
-            return ResponseEntity.status(409).body("IP Address " + request.getIpAddress() + " is already registered");
+            throw new IllegalStateException("IP Address " + request.getIpAddress() + " is already registered");
         }
 
         SenderEndPoint senderEndPoint = SenderEndPoint.builder()
@@ -44,7 +43,7 @@ public class PortManagementService {
 
         mavlinkUdpInputEntry.startListeningOnPorts(List.of(port));
 
-        return ResponseEntity.ok("Registered successfully");
+        return "Registered successfully";
     }
 
     public List<SenderEndPointSimpleResponse> getAllSimple() {
@@ -60,27 +59,21 @@ public class PortManagementService {
                 .collect(Collectors.toList());
     }
 
-
-
-    public ResponseEntity<String> updateIpWithPort(Long id, RegisterIpWithPortsRequest request) {
+    public String updateIpWithPort(Long id, RegisterIpWithPortsRequest request) {
         SenderEndPoint existing = senderEndPointRepository.findById(id)
-                .orElse(null);
-
-        if (existing == null) {
-            return ResponseEntity.status(404).body("SenderEndPoint with id " + id + " not found");
-        }
+                .orElseThrow(() -> new NoSuchElementException("SenderEndPoint with id " + id + " not found"));
 
         Integer newPort = Integer.valueOf(request.getPort());
         String newIp = request.getIpAddress();
 
         Optional<SenderEndPoint> portExists = senderEndPointRepository.findByPort(newPort);
         if (portExists.isPresent() && !portExists.get().getId().equals(id)) {
-            return ResponseEntity.status(409).body("Port " + newPort + " is already registered");
+            throw new IllegalStateException("Port " + newPort + " is already registered");
         }
 
         Optional<SenderEndPoint> ipExists = senderEndPointRepository.findByIpAddress(newIp);
         if (ipExists.isPresent() && !ipExists.get().getId().equals(id)) {
-            return ResponseEntity.status(409).body("IP Address " + newIp + " is already registered");
+            throw new IllegalStateException("IP Address " + newIp + " is already registered");
         }
 
         existing.setIpAddress(newIp);
@@ -89,22 +82,18 @@ public class PortManagementService {
         senderEndPointRepository.save(existing);
         portManagementManager.loadAllowedSenderPortsFromDB();
 
-        return ResponseEntity.ok("Updated successfully");
+        return "Updated successfully";
     }
 
-    public ResponseEntity<String> deleteSenderEndPoint(Long id) {
+    public String deleteSenderEndPoint(Long id) {
         SenderEndPoint existing = senderEndPointRepository.findById(id)
-                .orElse(null);
-
-        if (existing == null) {
-            return ResponseEntity.status(404).body("SenderEndPoint with id " + id + " not found");
-        }
+                .orElseThrow(() -> new NoSuchElementException("SenderEndPoint with id " + id + " not found"));
 
         senderEndPointRepository.delete(existing);
         portManagementManager.loadAllowedSenderPortsFromDB();
 
         mavlinkUdpInputEntry.stopListeningOnPort(existing.getPort());
 
-        return ResponseEntity.ok("Deleted successfully");
+        return "Deleted successfully";
     }
 }
