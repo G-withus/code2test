@@ -2,7 +2,7 @@
 
 const ConnectInfo = () => {
   return (
-    <div>ConnectInfo gggg</div>
+    <div className="w-screen h-screen flex items-center justify-center text-2xl">Not available Not Found :)</div>
   )
 }
 
