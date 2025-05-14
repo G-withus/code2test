@@ -6,10 +6,12 @@ RUN mvn dependency:go-offline
 COPY src ./src/
 RUN mvn clean package -DskipTests
 
-
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
-EXPOSE 8080 14000-16000/udp
+# Run as non-root user
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
+EXPOSE 8080 14000-14010/udp 15000-15010/udp
 CMD ["java", "-jar", "app.jar"]
