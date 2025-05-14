@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import PortListPage from "../pages/PortListPage";
 import toast from "react-hot-toast";
 import { mutate } from "swr";
+import {RxOpenInNewWindow} from "react-icons/rx";
 
 const PortTestCreate = () => {
   const {
@@ -54,9 +55,13 @@ const PortTestCreate = () => {
         <div>
           <label
             htmlFor="ip"
-            className="block text-sm font-medium text-gray-700"
+            className="flex items-center gap-2 text-sm font-medium text-gray-700"
           >
-            IP
+            <span>IP</span>
+            <span className="text-xs text-blue-600 cursor-pointer flex items-center"
+                  onClick={() => window.open("https://whatismyipaddress.com/")}>(Check your IP here 
+                  <RxOpenInNewWindow className="text-sm" />)
+                  </span>
           </label>
           <input
             {...register("ipAddress", { required: "ipAddress is required" })}
@@ -71,9 +76,10 @@ const PortTestCreate = () => {
         <div>
           <label
             htmlFor="port"
-            className="block text-sm font-medium text-gray-700"
+            className="flex items-center gap-2 text-sm font-medium text-gray-700"
           >
-            Port Number
+            <span>Port Number</span>
+            <span className="text-xs text-gray-800 ">(15000 ~ 15050)</span>
           </label>
           <input
             {...register("port", {
