@@ -79,7 +79,7 @@ const PortTestCreate = () => {
             className="flex items-center gap-2 text-sm font-medium text-gray-700"
           >
             <span>Port Number</span>
-            <span className="text-xs text-gray-800 ">(15000 ~ 15050)</span>
+            <span className="text-xs text-red-600 ">(15000 ~ 15050)</span>
           </label>
           <input
             {...register("port", {
