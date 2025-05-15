@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   frontend:
@@ -25,7 +26,7 @@ services:
     ports:
       - "81:81"
     depends_on:
-      - backend
+      - NELbackend
     networks:
       - testmdt-network
     restart: unless-stopped
@@ -43,22 +44,15 @@ services:
       - "8080:8080"
       - "14000-14050:14000-14050/udp"
       - "15000-15050:15000-15050/udp"
-    depends_on:
-      mysqldb:
-        condition: service_healthy
     environment:
-      # Local MySQL for development
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/aioceaneye?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://aioceaneye-db.c5gm8w60coul.ap-northeast-2.rds.amazonaws.com:3306/aioceaneye?useSSL=true&requireSSL=false
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=mdt20210616
-      # Uncomment for production with AWS RDS
-      # - SPRING_DATASOURCE_URL=jdbc:mysql://aioceaneye-db.c5gm8w60coul.ap-northeast-2.rds.amazonaws.com:3306/aioceaneye
-      # - SPRING_DATASOURCE_USERNAME=admin
-      # - SPRING_DATASOURCE_PASSWORD=mdt20210616
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRapons:
       - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
       - SPRING_SQL_INIT_MODE=always
       # AWS S3 configuration (use IAM role in production)
