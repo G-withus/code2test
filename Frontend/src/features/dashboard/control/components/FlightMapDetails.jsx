@@ -19,9 +19,16 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
 
     const remoteVideoRef = useRef(null);
-    const server = "ws://13.213.46.108:8188"; // Janus WebSocket Server
-    const streamId = 1;
+    const [status, setStatus] = useState('Initializing...');
+    const [error, setError] = useState('');
+    const janusRef = useRef(null);
+    const streamingRef = useRef(null);
+    const remoteStreamRef = useRef(null);
+
+    const server = "ws://43.201.9.168:8188"; // Janus WebSocket Server
+    const streamId = 1234;
     const secret = "adminpwd";
+    const mountpointName = "Drone Video Stream";
 
     console.log(remoteVideoRef.current);
 
@@ -37,9 +44,9 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const [wayPointsVisible, setWayPointsVisible] = useState(false);
     // const t = useTranslations();
 
-    console.log(systemID);
-    console.log(drones)
-    console.log(shipPosition)
+    // console.log(systemID);
+    // console.log(drones)
+    // console.log(shipPosition)
 
     const droneData = [
         {
@@ -81,128 +88,136 @@ const VideoViewer = ({setVideoView, systemID}) => {
       ];
 
       
-      //Live_Stream_Drone_Camera
-      useEffect(() => {
-        let janus = null;
-        let streaming = null;
-        let remoteStream = null;
-    
-        // Load adapter.js first
-        const adapterScript = document.createElement("script");
-        adapterScript.src = "/adapter-latest.js";
-        adapterScript.onload = () => loadJanus();
-        document.body.appendChild(adapterScript);
-    
-        function loadJanus() {
-          const janusScript = document.createElement("script");
-          janusScript.src = "/janus.js"; // Load from public folder
-          janusScript.onload = () => initializeJanus();
-          document.body.appendChild(janusScript);
-        }
-    
-        function initializeJanus() {
-          if (!window.Janus) {
-            console.error("Janus library not loaded");
-            setStatus("Error: Janus.js not loaded");
+      // Janus WebRTC Stream
+  useEffect(() => {
+    const adapterScript = document.createElement("script");
+    adapterScript.src = "/adapter-latest.js";
+    adapterScript.onload = loadJanus;
+    document.body.appendChild(adapterScript);
+
+    function loadJanus() {
+      const janusScript = document.createElement("script");
+      janusScript.src = "/janus.js";
+      janusScript.onload = initializeJanus;
+      document.body.appendChild(janusScript);
+    }
+
+    function initializeJanus() {
+      window.Janus.init({
+        debug: "warn",
+        callback: function () {
+          if (!window.Janus.isWebrtcSupported()) {
+            setError("WebRTC not supported by this browser");
             return;
           }
-    
-          window.Janus.init({
-            debug: "all",
-            callback: function () {
-              if (!window.Janus.isWebrtcSupported()) {
-                setStatus("WebRTC not supported!");
-                return;
-              }
-    
-              janus = new window.Janus({
-                server: server,
-                success: function () {
-                  janus.attach({
-                    plugin: "janus.plugin.streaming",
-                    opaqueId: "streaming-" + window.Janus.randomString(12),
-                    success: function (pluginHandle) {
-                      streaming = pluginHandle;
-                      startStream();
-                    },
-                    error: function (error) {
-                      console.error("Plugin attach error:", error);
-                    },
-                    onmessage: function (msg, jsep) {
-                      handleMessage(msg, jsep);
-                    },
-                    onremotetrack: function (track, mid, on) {
-                      if (!remoteStream) {
-                        remoteStream = new MediaStream();
-                        remoteVideoRef.current.srcObject = remoteStream;
-                      }
-                      if (on) {
-                        remoteStream.addTrack(track);
-                      } else {
-                        remoteStream.removeTrack(track);
-                      }
-                    },
-                    oncleanup: function () {
-                      remoteStream = null;
-                    },
-                  });
-                },
-                error: function (error) {
-                  console.error("Janus error:", error);
-                },
-              });
+
+          janusRef.current = new window.Janus({
+            server: server,
+            success: function () {
+              setStatus("Connected to Janus server");
+              attachToStreamingPlugin();
+            },
+            error: function (err) {
+              setError(`Connection failed: ${err}`);
             },
           });
-        }
-    
-        function startStream() {
-          let body = {
-            request: "watch",
-            id: streamId,
-            secret: secret,
-            offer_audio: true,
-            offer_video: true,
-          };
-          streaming.send({ message: body });
-        }
-    
-        function handleMessage(msg, jsep) {
-          if (msg["error"]) {
-            console.error("Streaming error:", msg["error"]);
+        },
+      });
+    }
+
+    function attachToStreamingPlugin() {
+      janusRef.current.attach({
+        plugin: "janus.plugin.streaming",
+        opaqueId: `streaming-${streamId}-${window.Janus.randomString(12)}`,
+        success: function (pluginHandle) {
+          streamingRef.current = pluginHandle;
+          setStatus(`Connected to ${mountpointName}`);
+          startWatching();
+        },
+        error: function (error) {
+          setError(`Plugin error: ${error}`);
+        },
+        onmessage: function (msg, jsep) {
+          if (msg.error) {
+            setError(msg.error);
             return;
           }
-    
+          if (msg.result && msg.result.status) {
+            setStatus(`Stream status: ${msg.result.status}`);
+          }
           if (jsep) {
-            streaming.createAnswer({
+            streamingRef.current.createAnswer({
               jsep: jsep,
-              tracks: [
-                { type: "audio", recv: true },
-                { type: "video", recv: true },
-              ],
-              success: function (jsep) {
-                let body = { request: "start" };
-                streaming.send({ message: body, jsep: jsep });
+              tracks: [{ type: "video", recv: true }],
+              success: function (jsepAnswer) {
+                streamingRef.current.send({
+                  message: { request: "start" },
+                  jsep: jsepAnswer,
+                });
               },
               error: function (error) {
-                console.error("Error creating answer:", error);
+                setError(`WebRTC error: ${error}`);
               },
             });
           }
-        }
-    
-        return () => {
-          if (janus) janus.destroy();
-          document.body.removeChild(adapterScript);
-        };
-      }, []);
-    
+        },
+        onremotetrack: function (track, mid, on) {
+          if (!remoteStreamRef.current) {
+            remoteStreamRef.current = new MediaStream();
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = remoteStreamRef.current;
+            }
+          }
+          if (on) {
+            remoteStreamRef.current.addTrack(track);
+            setStatus(`Stream ${mid} playing`);
+          } else {
+            remoteStreamRef.current.removeTrack(track);
+          }
+        },
+        oncleanup: function () {
+          setStatus("Stream disconnected");
+          remoteStreamRef.current = null;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+          }
+        },
+      });
+    }
 
+    function startWatching() {
+      streamingRef.current.send({
+        message: {
+          request: "watch",
+          id: streamId,
+          secret: secret,
+          offer_audio: false,
+          offer_video: true,
+        },
+        success: function () {
+          setStatus("Requesting stream...");
+        },
+        error: function (error) {
+          setError(`Watch error: ${error}`);
+        },
+      });
+    }
+
+    return () => {
+      if (janusRef.current) {
+        janusRef.current.destroy();
+      }
+      document.body.removeChild(adapterScript);
+    };
+  }, [systemID]);
+      
+    
       const ws = useRef(null);
 
       useEffect(() => {
         const connectWebSocket = () => {
           console.log("Attempting WebSocket connection...");
-          const wsUrl = "ws://3.34.40.154:8080/telemetry";
+          const wsUrl = "ws://3.35.167.180:8081/telemetry";
           ws.current = new WebSocket(wsUrl);
     
           ws.current.onopen = () => {
@@ -306,12 +321,12 @@ const VideoViewer = ({setVideoView, systemID}) => {
           return shipIcons[hash % shipIcons.length];
         };
         
-        // const shipsWithIcons = useMemo(() => {
-        //   return Object.entries(shipPosition).map((ship, index) => ({
-        //     ...ship,
-        //     icon: getShipIcon(index),
-        //   }));
-        // }, [shipPosition]);
+        const shipsWithIcons = useMemo(() => {
+          return Object.entries(shipPosition).map((ship, index) => ({
+            ...ship,
+            icon: getShipIcon(index),
+          }));
+        }, [shipPosition]);
 
         // console.log(shipsWithIcons)
       
@@ -404,11 +419,10 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 >
                     <video
                         ref={remoteVideoRef}
-                        autoplay
-                        loop 
-                        controls
-                        playsinline 
+                        autoPlay 
                         muted
+                        controls
+                        playsInline 
                         className="cursor-grab w-full h-full object-fill"
                         style={{
                             transform: `scale(${video1State.scale}) translate(${video1State.x}px, ${video1State.y}px)`,
@@ -439,7 +453,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                         transform: `scale(${video2State.scale}) translate(${video1State.x}px, ${video2State.y}px)`,
                         transition: "transform 0.1s ease-out",
                     }}
-                ></video>
+                    ></video>
                 </div>
             </div>
 
@@ -447,14 +461,14 @@ const VideoViewer = ({setVideoView, systemID}) => {
             <div className="w-full flex items-center h-1/2">
                 {/** Telemetric data */}
                 <div className="w-1/2 h-full p-2 flex flex-col gap-2 text-black">
-                    <div className="w-full flex justify-center items-center p-2 bg-primary bg-opacity-[8%] rounded-md text-sm font-semibold">Flight Info</div>
+                    <div className="w-full flex justify-center items-center p-2 bg-primary text-white text-sm font-semibold border-b-2 border-b-primary">Flight Info</div>
                     
                     <div className="w-full flex flex-wrap mr-2 justify-start items-center text-sm">
                     {droneData && droneData?.length > 0 ? (
                         Object.entries(droneData[0]).map(([key, value]) => (
                             <div key={key} className="w-1/3 flex items-center p-[8px] justify-between border-b-0.5 text-xs">
-                                <div className="font-semibold">{key}:</div>
-                                <div className="overflow-scroll">{value}</div>
+                                <div className="font-semibold text-gray-500">{key}:</div>
+                                <div className="overflow-scroll text-primary font-bold">{value}</div>
                             </div>
                         ))
                         ) : (
@@ -467,11 +481,15 @@ const VideoViewer = ({setVideoView, systemID}) => {
       {drones && Object.keys(drones).length > 0 && (<MapContainer
             center={[drones.lat, drones.lon]}
             zoom={14}
+            minZoom={2.5}
+            maxZoom={15} 
             className="z-0 w-1/2 h-full"
             zoomControl={false}
             attributionControl={false}
+            maxBounds={[[-85, -180], [85, 180]]} // limits panning to a single world map
+            maxBoundsViscosity={1.0} 
       >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap={true}/>
               {/* {shipsWithIcons && Object.keys(shipsWithIcons).map((ship, index) => (
                 <Marker
                   key={index}

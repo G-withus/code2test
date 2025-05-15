@@ -10,5 +10,5 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
-EXPOSE 8080 14000-14010/udp 15000-15010/udp
+EXPOSE 8080 14000-14999/udp 15000-15999/udp
 CMD ["java", "-jar", "app.jar"]
