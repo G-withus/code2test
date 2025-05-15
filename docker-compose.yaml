@@ -26,7 +26,7 @@ services:
     ports:
       - "81:81"
     depends_on:
-      - NELbackend
+      - backend
     networks:
       - testmdt-network
     restart: unless-stopped
