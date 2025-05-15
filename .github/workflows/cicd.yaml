@@ -14,6 +14,7 @@ on:
       - 'Backend/Dockerfile'
       - 'Backend/config/application-docker.properties'
       - '.github/workflows/**'
+
   pull_request:
     branches:
       - main
@@ -51,36 +52,50 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' # Only deploy on push, not pull requests
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
 
       - name: Install SSH key
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key
           chmod 600 ec2_key
 
-      - name: Copy project files to EC2
-        run: |
-          scp -i ec2_key -o StrictHostKeyChecking=no -r \
-            Frontend Portregistration Backend docker-compose.yaml \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/communication-test/
-
-      - name: Deploy to EC2
+      - name: SSH into EC2 and deploy
         run: |
           ssh -i ec2_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/${{ secrets.EC2_USER }}/communication-test
+            set -e
 
-            # Stop and remove existing containers
+            cd /home/${{ secrets.EC2_USER }}
+
+            # Remove folder if it exists and not a git repo
+            if [ -d "communication-test" ]; then
+              if [ ! -d "communication-test/.git" ]; then
+                rm -rf communication-test
+              fi
+            fi
+
+            # Clone if not exists, or clean update if it is a git repo
+            if [ ! -d "communication-test/.git" ]; then
+              git clone https://github.com/${{ github.repository }}.git communication-test
+            else
+              cd communication-test
+              git fetch --all
+              git reset --hard origin/main
+              cd ..
+            fi
+
+            cd communication-test
+
+            # Stop and remove current containers
             docker compose down
 
-            # Build and start containers
+            # Build and start new containers
             docker compose up --build -d
 
-            # Clean up unused Docker resources
+            # Clean up unused Docker images and containers
             docker system prune -a -f
           EOF
 

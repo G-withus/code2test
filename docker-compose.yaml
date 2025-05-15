@@ -1,5 +1,4 @@
 
-
 services:
   frontend:
     build:
@@ -9,9 +8,15 @@ services:
       - "80:80"
     depends_on:
       - backend
+      - portregistration
     networks:
       - testmdt-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   portregistration:
     build:
@@ -24,6 +29,11 @@ services:
     networks:
       - testmdt-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   backend:
     build:
@@ -33,28 +43,58 @@ services:
       - "8080:8080"
       - "14000-14010:14000-14010/udp"
       - "15000-15010:15000-15010/udp"
-  
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
     environment:
+      # Local MySQL for development
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/aioceaneye?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=mdt20210616
+      # Uncomment for production with AWS RDS
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://aioceaneye-db.c5gm8w60coul.ap-northeast-2.rds.amazonaws.com:3306/aioceaneye
+      # - SPRING_DATASOURCE_USERNAME=admin
+      # - SPRING_DATASOURCE_PASSWORD=mdt20210616
       - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+      - SPRING_SQL_INIT_MODE=always
+      # AWS S3 configuration (use IAM role in production)
+      - CLOUD_AWS_REGION_STATIC=ap-northeast-2
+      - CLOUD_AWS_CREDENTIALS_ACCESS_KEY=AKIATG6MGWCA6XSGIKCW
+      - CLOUD_AWS_CREDENTIALS_SECRET_KEY=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
+      - CLOUD_AWS_S3_BUCKET_NAME=teledata-log-bucket
     networks:
       - testmdt-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mysqldb:
-    image: mysql:8.0  # Pinned version instead of 'latest'
+    image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=manage_port
+      - MYSQL_ROOT_PASSWORD=mdt20210616
+      - MYSQL_DATABASE=aioceaneye
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=mdt20210616
     volumes:
       - mysqldb-data:/var/lib/mysql
     ports:
-      - "3306:3306"  # Exposed for debugging (remove in production)
+      - "3306:3306" # Exposed for debugging (remove in production)
     networks:
       - testmdt-network
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-pmdt20210616"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   mysqldb-data:
