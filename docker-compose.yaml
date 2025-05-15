@@ -75,30 +75,6 @@ services:
       timeout: 10s
       retries: 3
 
-  mysqldb:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=mdt20210616
-      - MYSQL_DATABASE=aioceaneye
-      - MYSQL_USER=admin
-      - MYSQL_PASSWORD=mdt20210616
-    volumes:
-      - mysqldb-data:/var/lib/mysql
-    ports:
-      - "3306:3306" # Exposed for debugging (remove in production)
-    networks:
-      - testmdt-network
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-pmdt20210616"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  mysqldb-data:
-
 networks:
   testmdt-network:
     driver: bridge
