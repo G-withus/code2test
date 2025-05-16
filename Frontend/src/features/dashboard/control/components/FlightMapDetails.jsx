@@ -15,6 +15,9 @@ const VideoViewer = ({setVideoView, systemID}) => {
     ];
 
     // State for each video's zoom and position
+    const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
+    const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
+   
     const remoteVideoRef = useRef(null);
     const [status, setStatus] = useState('Initializing...');
     const [error, setError] = useState('');
