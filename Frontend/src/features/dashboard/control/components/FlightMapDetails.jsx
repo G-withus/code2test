@@ -44,7 +44,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     // console.log(shipPosition)
     const droneData = [
         {
-          "Drone_ID": `VT${String(drones.systemid).padStart(3, '0')} / ${drones.system_id}`,
+          "Drone_ID": `VT${String(drones.system_id).padStart(3, '0')} / ${drones.system_id}`,
           "Vessel ID": "??",
           "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
           "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
