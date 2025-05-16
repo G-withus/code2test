@@ -387,7 +387,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             </div>
 
             {/* Video Container */}
-            <div className="w-1/2 flex items-center h-1/2 bg-primary">
+            <div className="w-full flex items-center h-1/2 bg-primary">
                 {/* Video 1 */}
                 <div
                     className="w-1/2 h-full overflow-hidden flex justify-center items-center"
