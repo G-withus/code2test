@@ -106,7 +106,7 @@ const PortTestCreate = () => {
         </button>
       </form>
 
-      <div className="flex gap-1 w-full justify-center items-center p-1 text-sm">
+      <div className="flex gap-1 w-full justify-center items-center mt-2 text-sm">
         <span>Remote-Server IP:</span>
         <span className="text-blue-600">3.34.40.154</span>
       </div>
