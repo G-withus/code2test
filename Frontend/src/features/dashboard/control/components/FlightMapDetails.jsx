@@ -377,12 +377,33 @@ const VideoViewer = ({setVideoView, systemID}) => {
         }
     };
 
+   const [formattedTime, setFormattedTime] = useState("");
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        const pad = (n) => n.toString().padStart(2, "0");
+        const year = pad((date.getFullYear() % 100)+2000);
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+    };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFormattedTime(formatTimestamp(Date.now()));
+    }, 1000); // update every second
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
+
     return (
         <div className="w-full h-full absolute z-50 flex flex-col top-0 left-0 font-pretendard bg-white text-white p-0">
             {/* Header */}
             <div className="w-full flex justify-between items-center pt-2 pb-2 pl-4 pr-4 bg-primary bg-opacity-70">
                 <div className="w-1 h-1 rounded-full bg-[#4ECC00]"></div>
-                <div className="text-sm ">Live Flight Video</div>
+                <div className="text-sm ">
+                   Live Flight Video ({formattedTime})
+                </div>
                 <RxCross2 onClick={() => setVideoView(false)} className="cursor-pointer" />
             </div>
 
