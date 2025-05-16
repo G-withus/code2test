@@ -387,10 +387,10 @@ const VideoViewer = ({setVideoView, systemID}) => {
             </div>
 
             {/* Video Container */}
-            <div className="w-full flex items-center h-1/2 bg-primary">
+            <div className="w-1/2 flex items-center h-1/2 bg-primary">
                 {/* Video 1 */}
                 <div
-                    className="w-full h-full overflow-hidden flex justify-center items-center"
+                    className="w-1/2 h-full overflow-hidden flex justify-center items-center"
                     onWheel={(e) => handleWheelZoom(e, 0)}
                     onMouseDown={(e) => handleMouseDown(e, 0)}
                     onMouseMove={handleMouseMove}
@@ -411,13 +411,9 @@ const VideoViewer = ({setVideoView, systemID}) => {
                         }}
                     ></video>  
                 </div>
-               
-            </div>
 
-            {/* Telemetric data and map */}
-            <div className="w-full flex items-center h-1/2">
-                {/** Telemetric data */}
-                <div className="w-1/2 h-full p-2 flex flex-col gap-2 text-black">
+               {/** Telemetric data */}
+               <div className="w-1/2 h-full p-2 flex flex-col gap-2 text-black">
                     <div className="w-full flex justify-center items-center p-2 bg-primary text-white text-sm font-semibold border-b-2 border-b-primary">Flight Info</div>
                     
                     <div className="w-full flex flex-wrap mr-2 justify-start items-center text-sm">
@@ -433,6 +429,11 @@ const VideoViewer = ({setVideoView, systemID}) => {
                     )}
                     </div>
                 </div>
+               
+            </div>
+
+            {/* Telemetric data and map */}
+            <div className="w-full flex items-center h-1/2">
                 
                 {/* Map */}
       {drones && Object.keys(drones).length > 0 && (<MapContainer
@@ -440,7 +441,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             zoom={14}
             minZoom={2.5}
             maxZoom={15} 
-            className="z-0 w-1/2 h-full"
+            className="z-0 w-full h-full"
             zoomControl={false}
             attributionControl={false}
             maxBounds={[[-85, -180], [85, 180]]} // limits panning to a single world map
