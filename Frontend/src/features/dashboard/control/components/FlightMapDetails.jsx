@@ -44,7 +44,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     // console.log(shipPosition)
     const droneData = [
         {
-          "Drone_ID": `VT${String(drones.systemid).padStart(3, '0')} / ${drones.systemid}`,
+          "Drone_ID": `VT${String(drones.systemid).padStart(3, '0')} / ${drones.system_id}`,
           "Vessel ID": "??",
           "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
           "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
@@ -214,7 +214,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
               const data = JSON.parse(event.data);
               if (data.drones && Array.isArray(data.drones)) {
 
-                const selectedDrone = data.drones.find((drone) => drone.systemid === systemID) || null;
+                const selectedDrone = data.drones.find((drone) => drone.system_id === systemID) || null;
 
                 setDrones(selectedDrone);
                 setShipPosition(selectedDrone.home_location); 
@@ -484,13 +484,13 @@ const VideoViewer = ({setVideoView, systemID}) => {
               {drones && Object.keys(drones).length > 0 && (
                 <>
                 <Marker
-                  key={drones.systemid}
+                  key={drones.system_id}
                   position={[drones.lat, drones.lon]}
                   icon={droneIcon(drones.yaw)}
                 >
                   <Popup>
                     <div>
-                    <strong>Drone id:</strong> VT{String(drones.systemid).padStart(3, '0')} / {drones.systemid} <br />
+                    <strong>Drone id:</strong> VT{String(drones.system_id).padStart(3, '0')} / {drones.system_id} <br />
                       <strong>Altitude(m):</strong> {drones.alt} m <br />
                       <strong>Time in air (m.s)</strong> {drones.time_in_air} m.s <br />
                       <strong>Airspeed (m/s):</strong> {drones.airspeed} m/s <br />
