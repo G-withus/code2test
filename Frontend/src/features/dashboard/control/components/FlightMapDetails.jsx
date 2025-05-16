@@ -15,27 +15,20 @@ const VideoViewer = ({setVideoView, systemID}) => {
     ];
 
     // State for each video's zoom and position
-    const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
-    const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
-
     const remoteVideoRef = useRef(null);
     const [status, setStatus] = useState('Initializing...');
     const [error, setError] = useState('');
     const janusRef = useRef(null);
     const streamingRef = useRef(null);
     const remoteStreamRef = useRef(null);
-
     const server = "ws://43.201.9.168:8188"; // Janus WebSocket Server
     const streamId = 1234;
     const secret = "adminpwd";
     const mountpointName = "Drone Video Stream";
-
     console.log(remoteVideoRef.current);
-
     const videoRefs = [useRef(null), useRef(null)];
     const isDragging = useRef(false);
     const lastPosition = useRef({ x: 0, y: 0 });
-
     const [drones, setDrones] = useState({});
     const [lat, setLat] = useState("");
     const [lon, setLon] = useState("");
@@ -43,29 +36,22 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const reconnectInterval = useRef(null);
     const [wayPointsVisible, setWayPointsVisible] = useState(false);
     // const t = useTranslations();
-
     // console.log(systemID);
     // console.log(drones)
     // console.log(shipPosition)
-
     const droneData = [
         {
           "Drone_ID": `VT${String(drones.systemid).padStart(3, '0')} / ${drones.systemid}`,
           "Vessel ID": "??",
           "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
-          "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"), 
+          "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
           "alt": drones.alt,
           "dist_traveled(m)": drones.dist_traveled,
           "wp_dist(m)": drones.wp_dist,
-
           "dist_to_home(m)": drones.dist_to_home != null ? drones.dist_to_home.toString().replace('.', '').slice(0, 4): null,
-
           "null": null,
-
           "wind_vel(m/s)": drones.wind_vel != null ? drones.wind_vel.toFixed(2) : null,
-
           "airspeed(m/s)": drones.airspeed != null ? drones.airspeed.toFixed(2) : null,
-          
           "groundspeed(m/s)": drones.ground_speed != null ? drones.ground_speed.toFixed(2) : null,
           "roll": drones.roll,
           "pitch": drones.pitch,
@@ -86,22 +72,18 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "blank": null,
         }
       ];
-
-      
       // Janus WebRTC Stream
   useEffect(() => {
     const adapterScript = document.createElement("script");
     adapterScript.src = "/adapter-latest.js";
     adapterScript.onload = loadJanus;
     document.body.appendChild(adapterScript);
-
     function loadJanus() {
       const janusScript = document.createElement("script");
       janusScript.src = "/janus.js";
       janusScript.onload = initializeJanus;
       document.body.appendChild(janusScript);
     }
-
     function initializeJanus() {
       window.Janus.init({
         debug: "warn",
@@ -110,7 +92,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
             setError("WebRTC not supported by this browser");
             return;
           }
-
           janusRef.current = new window.Janus({
             server: server,
             success: function () {
@@ -124,7 +105,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
         },
       });
     }
-
     function attachToStreamingPlugin() {
       janusRef.current.attach({
         plugin: "janus.plugin.streaming",
@@ -184,7 +164,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
         },
       });
     }
-
     function startWatching() {
       streamingRef.current.send({
         message: {
@@ -202,7 +181,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
         },
       });
     }
-
     return () => {
       if (janusRef.current) {
         janusRef.current.destroy();
