@@ -14,6 +14,16 @@ const VideoViewer = ({setVideoView, systemID}) => {
         { id: "ship1", position: [35.062067, 129.1024905] },
     ];
 
+    function HeadingLine({ position, heading }) {
+      const length = 0.24; // You can tune this for visual size
+      const angleRad = (heading * Math.PI) / 180;
+      const endLat = position[0] + length * Math.cos(angleRad);
+      const endLng = position[1] + length * Math.sin(angleRad);
+      const line = [position, [endLat, endLng]];
+      return <Polyline positions={line} color="#224CB7" opacity={0.8}
+      weight={1.7} />;
+    }
+
     // State for each video's zoom and position
     const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
@@ -459,7 +469,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 {/* Map */}
       {drones && Object.keys(drones).length > 0 && (<MapContainer
             center={[drones.lat, drones.lon]}
-            zoom={14}
+            zoom={9}
             minZoom={2.5}
             maxZoom={15} 
             className="z-0 w-full h-full"
@@ -488,6 +498,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                   position={[drones.lat, drones.lon]}
                   icon={droneIcon(drones.yaw)}
                 >
+                  
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drones.system_id).padStart(3, '0')} / {drones.system_id} <br />
@@ -499,6 +510,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                     </div>
                   </Popup>
                 </Marker>
+                <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}

@@ -36,6 +36,16 @@ const RealTimeInfo = () => {
       iconSize: [25, 25],
     });
 
+    function HeadingLine({ position, heading }) {
+      const length = 0.15; // You can tune this for visual size
+      const angleRad = (heading * Math.PI) / 180;
+      const endLat = position[0] + length * Math.cos(angleRad);
+      const endLng = position[1] + length * Math.sin(angleRad);
+      const line = [position, [endLat, endLng]];
+      return <Polyline positions={line} color="#224CB7" opacity={0.8}
+      weight={1.7} />;
+    }
+
     // const shipIcons = [
     //   "vessel(Navy).png",
     //   "vessel(blue).png",
@@ -371,6 +381,7 @@ const [videoView, setVideoView] = useState(false);
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
                 >
+                <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
