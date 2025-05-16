@@ -79,7 +79,7 @@ const PortTestCreate = () => {
             className="flex items-center gap-2 text-sm font-medium text-gray-700"
           >
             <span>Port Number</span>
-            <span className="text-xs text-red-600 ">(15000 ~ 15050)  (14000 ~ 14050)</span>
+            <span className="text-xs text-red-600 ">(14000 ~ 14050)</span>
           </label>
           <input
             {...register("port", {
@@ -105,6 +105,11 @@ const PortTestCreate = () => {
           Submit
         </button>
       </form>
+
+      <div className="flex gap-1 w-full justify-center items-center p-1 text-sm">
+        <span>Remote-Server IP:</span>
+        <span className="text-blue-600">3.34.40.154</span>
+      </div>
 
       <PortListPage />
     </div>
