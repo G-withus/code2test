@@ -367,8 +367,6 @@ const [videoView, setVideoView] = useState(false);
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setVideoView(true);
-                    setSystemID(drone.systemid);
-                    handleSelectedDrone(drone.systemid);
                   },
                   mouseover: () => {setSystemID(drone.systemid); handleSelectedDrone(drone.systemid);},
                   }}
