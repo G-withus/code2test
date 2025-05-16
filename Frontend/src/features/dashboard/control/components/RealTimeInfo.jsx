@@ -368,12 +368,12 @@ const [videoView, setVideoView] = useState(false);
                   icon={droneIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setVideoView(true);
                   },
-                  mouseover: () => {setSystemID(drone.systemid); handleSelectedDrone(drone.systemid);},
+                  mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
                 >
                   <Popup>
                     <div>
-                    <strong>Drone id:</strong> VT{String(drone.systemid).padStart(3, '0')} / {drone.systemid} <br />
+                    <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
                       <strong>Latitude:</strong> {drone.lat} N<br />
                       <strong>Longitude:</strong> {drone.lon} E<br />
                       <strong>Altitude(m):</strong> {drone.alt} m <br />
