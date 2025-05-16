@@ -42,6 +42,7 @@ public class MavlinkMessageHandlerService {
         data.put("alt", 0.0);
         data.put("dist_traveled", 0.0);
         data.put("wp_dist", 0);
+        data.put("heading", 0);
         data.put("dist_to_home", 0.0);
         data.put("vertical_speed", 0.0);
         data.put("ground_speed", 0.0);
@@ -110,6 +111,7 @@ public class MavlinkMessageHandlerService {
             telemetryData.put("airspeed", vfrHud.airspeed());
             telemetryData.put("ground_speed", vfrHud.groundspeed());
             telemetryData.put("vertical_speed", vfrHud.climb());
+            telemetryData.put("heading", vfrHud.heading());
 
             int wpDist = (int) telemetryData.get("wp_dist");
 
