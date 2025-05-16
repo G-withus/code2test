@@ -409,7 +409,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             <div className="w-full flex items-center h-1/2 bg-primary">
                 {/* Video 1 */}
                 <div
-                    className="w-1/2 h-full overflow-hidden flex justify-center items-center"
+                    className="w-full h-full overflow-hidden flex justify-center items-center"
                     onWheel={(e) => handleWheelZoom(e, 0)}
                     onMouseDown={(e) => handleMouseDown(e, 0)}
                     onMouseMove={handleMouseMove}
@@ -428,33 +428,9 @@ const VideoViewer = ({setVideoView, systemID}) => {
                             transform: `scale(${video1State.scale}) translate(${video1State.x}px, ${video1State.y}px)`,
                             transition: "transform 0.1s ease-out",
                         }}
-                    ></video>
-                    
+                    ></video>  
                 </div>
-
-                {/* Video 2 */}
-                <div
-                    className="w-1/2 h-full overflow-hidden flex justify-center items-center"
-                    onWheel={(e) => handleWheelZoom(e, 0)}
-                    onMouseDown={(e) => handleMouseDown(e, 0)}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    onDoubleClick={() => resetZoom(0)}
-                >
-                    {/** Video 2 */}
-                    <video
-                    ref={videoRefs[0]}
-                    src="TestVideo2.mp4"
-                    autoPlay
-                    loop
-                    className="cursor-grab w-full h-full object-fill"
-                    style={{
-                        transform: `scale(${video2State.scale}) translate(${video1State.x}px, ${video2State.y}px)`,
-                        transition: "transform 0.1s ease-out",
-                    }}
-                    ></video>
-                </div>
+               
             </div>
 
             {/* Telemetric data and map */}
