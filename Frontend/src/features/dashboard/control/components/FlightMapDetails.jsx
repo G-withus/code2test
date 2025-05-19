@@ -227,7 +227,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 const selectedDrone = data.drones.find((drone) => drone.system_id === systemID) || null;
 
                 setDrones(selectedDrone);
-                setShipPosition(selectedDrone.home_location || {});; 
+                // setShipPosition(selectedDrone.home_location || {});; 
                 // let updatedLat = null;
                 // let updatedLon = null;
                 // updatedLat = `${Math.abs(selectedDrone.lat)}° ${selectedDrone.lat >= 0 ? "N" : "S"}`;
