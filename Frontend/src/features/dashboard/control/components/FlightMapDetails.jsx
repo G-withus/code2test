@@ -471,7 +471,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             center={[drones.lat, drones.lon]}
             zoom={9}
             minZoom={2.5}
-            maxZoom={19} 
+            maxZoom={18} 
             className="z-0 w-full h-full"
             zoomControl={false}
             attributionControl={false}
