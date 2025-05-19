@@ -74,7 +74,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "time_in_air(s)": drones.time_in_air,
           "time_in_air_min_sec(m/s)": drones.time_in_air,
           "gps_hdop": drones.gps_hdop,
-          "battery_voltage(V)": drones.battery_voltage != null ? ((drones.battery_voltage)/100).toFixed(2) : null,
+          "battery_voltage(V)": drones.battery_voltage != null ? ((drones.battery_voltage)/100).toFixed(3) : null,
           "battery_current(A)": drones.battery_current != null ? ((drones.battery_current)/100).toFixed(2) : null,
           "ch3percent": drones.ch3percent+"%",
           "ch3out": drones.ch3out,
