@@ -349,7 +349,7 @@ const [videoView, setVideoView] = useState(false);
           center={[35.0767, 129.0921]}
           zoom={7}
           minZoom={2.5}
-          maxZoom={12}
+          maxZoom={19}
           style={{ height: "100vh", width: "100%" }}
           className="z-0 w-full h-full" zoomControl={false}
           trackResize={true}
