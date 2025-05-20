@@ -403,7 +403,7 @@ const [videoView, setVideoView] = useState(false);
                 >
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
                 <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drones.lat, drones.lon]} heading={drones.previous_heading / 100} />
+                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
