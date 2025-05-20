@@ -103,7 +103,7 @@ const FlightData = () => {
           <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.lat).toFixed(5)} {`S`}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.lon).toFixed(2)}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{Math.abs(data.wind_vel).toFixed(2)}</td>
-          <td className="px-2 py-4 text-center border-b border-gray-300">{data.time_in_air}</td>
+          <td className="px-2 py-4 text-center border-b border-gray-300">{`${String(Math.floor(data.time_in_air / 60)).padStart(2, '0')} min ${String(data.time_in_air % 60).padStart(2, '0')}s`}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{data.gps_hdop}</td>
           <td className="px-2 py-4 text-center border-b border-gray-300">{data.battery_voltage}</td>
          
