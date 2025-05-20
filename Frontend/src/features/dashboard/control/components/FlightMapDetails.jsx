@@ -34,6 +34,16 @@ const VideoViewer = ({setVideoView, systemID}) => {
       weight={1.7} />;
     }
 
+   function HeadingLineBlack({ position, heading }) {
+      const length = 0.15; // You can tune this for visual size
+      const angleRad = (heading * Math.PI) / 180;
+      const endLat = position[0] + length * Math.cos(angleRad);
+      const endLng = position[1] + length * Math.sin(angleRad);
+      const line = [position, [endLat, endLng]];
+      return <Polyline positions={line} color="#000000" opacity={0.8}
+      weight={1.7} />;
+    }
+
     // State for each video's zoom and position
     const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
@@ -69,7 +79,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
           "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
           "alt": drones.alt,
-          "dist_traveled(m)": drones.dist_traveled,
+          "dist_traveled(m)": drones.dist_traveled != null ? `${drones.dist_traveled} m` : null,
           "wp_dist(m)": drones.wp_dist,
           "dist_to_home(m)": drones.dist_to_home != null ? drones.dist_to_home.toString().replace('.', '').slice(0, 4): null,
           "null": null,
@@ -82,7 +92,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "toh": drones.toh,
           "tot": drones.tot,
           "time_in_air(s)": drones.time_in_air,
-          "time_in_air_min_sec(m/s)": drones.time_in_air,
+          "time_in_air_min_sec": drones.time_in_air != null ? `${String(Math.floor(drones.time_in_air / 60)).padStart(2, '0')} min ${String(drones.time_in_air % 60).padStart(2, '0')}s` : null,
           "gps_hdop": drones.gps_hdop,
           "battery_voltage(V)": drones.battery_voltage != null ? ((drones.battery_voltage)/100).toFixed(3) : null,
           "battery_current(A)": drones.battery_current != null ? ((drones.battery_current)/100).toFixed(2) : null,
@@ -521,7 +531,8 @@ const VideoViewer = ({setVideoView, systemID}) => {
                   </Popup>
                 </Marker>
                 <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
-                   <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
+                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
+                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={Math.floor(drone.previous_heading / 100)} />
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
