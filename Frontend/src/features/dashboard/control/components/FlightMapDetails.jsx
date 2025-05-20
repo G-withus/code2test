@@ -20,7 +20,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
       const line = [position, [endLat, endLng]];
-      return <Polyline positions={line} color="#224CB7" opacity={0.8}
+      return <Polyline positions={line} color="#FF0000" opacity={0.8}
       weight={1.7} />;
     }
 
@@ -536,7 +536,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
-                  color="red"
+                  color="blue"
                   opacity={0.5}
                   weight={2}
                 />
