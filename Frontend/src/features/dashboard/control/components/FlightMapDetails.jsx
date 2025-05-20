@@ -24,6 +24,16 @@ const VideoViewer = ({setVideoView, systemID}) => {
       weight={1.7} />;
     }
 
+   function HeadingLineOrange({ position, heading }) {
+      const length = 0.15; // You can tune this for visual size
+      const angleRad = (heading * Math.PI) / 180;
+      const endLat = position[0] + length * Math.cos(angleRad);
+      const endLng = position[1] + length * Math.sin(angleRad);
+      const line = [position, [endLat, endLng]];
+      return <Polyline positions={line} color="#FF4D00" opacity={0.8}
+      weight={1.7} />;
+    }
+
     // State for each video's zoom and position
     const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
@@ -511,6 +521,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                   </Popup>
                 </Marker>
                 <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
+                   <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
