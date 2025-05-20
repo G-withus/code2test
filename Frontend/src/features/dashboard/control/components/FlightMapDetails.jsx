@@ -531,8 +531,8 @@ const VideoViewer = ({setVideoView, systemID}) => {
                   </Popup>
                 </Marker>
                 <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
-                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={Math.floor(drone.previous_heading / 100)} />
+                <HeadingLineOrange position={[drones.lat, drones.lon]} heading={drones.target_heading} />
+                <HeadingLineBlack position={[drones.lat, drones.lon]} heading={Math.floor(drones.previous_heading / 100)} />
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
