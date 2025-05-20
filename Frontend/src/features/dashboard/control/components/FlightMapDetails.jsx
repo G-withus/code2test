@@ -79,7 +79,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
           "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
           "alt": drones.alt,
-          "dist_traveled(m)": drones.dist_traveled != null ? `${Math.floor(drones.dist_traveled)} m` : null
+          "dist_traveled(m)": drones.dist_traveled != null ? `${Math.floor(drones.dist_traveled)} m` : null,
           "wp_dist(m)": drones.wp_dist,
           "dist_to_home(m)": drones.dist_to_home != null ? drones.dist_to_home.toString().replace('.', '').slice(0, 4): null,
           "null": null,
