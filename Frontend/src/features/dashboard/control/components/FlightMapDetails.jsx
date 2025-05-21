@@ -600,6 +600,18 @@ const VideoViewer = ({setVideoView, systemID}) => {
       weight={1.7} />;
     }
 
+   function FollowDrone({ lat, lon }) {
+      const map = useMap();
+    
+      useEffect(() => {
+        if (lat && lon) {
+          map.setView([lat, lon], map.getZoom()); // keep zoom level
+        }
+      }, [lat, lon, map]);
+    
+      return null;
+    }
+
     // State for each video's zoom and position
     const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
@@ -1119,6 +1131,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
                <HeadingLineOrange position={[drones.lat, drones.lon]} heading={drones.target_heading} />
                <HeadingLineBlack position={[drones.lat, drones.lon]} heading={Math.floor(drones.previous_heading / 100)} />
+               <FollowDrone lat={drones.lat} lon={drones.lon} />
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
