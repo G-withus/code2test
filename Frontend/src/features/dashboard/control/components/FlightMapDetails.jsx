@@ -1052,10 +1052,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                     onMouseLeave={handleMouseUp}
                     onDoubleClick={() => resetZoom(1)}
                 >
-                    <img
-                        src={imgRef}
-                        alt="Live stream"
-                    ></img>
+                    <img ref={imgRef} alt="base64 image stream" style={{ border: '1px solid #ccc', maxHeight: '480px' }}/>
                 </div>
             </div>
 
