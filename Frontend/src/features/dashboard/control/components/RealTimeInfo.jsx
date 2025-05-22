@@ -279,7 +279,7 @@ const [videoView, setVideoView] = useState(false);
 
   const handleSelectedDrone = (systemID) => {
     const droneList = Object.values(drones); // convert to array
-    const clickedDrone = droneList.find(drone => drone.systemid === systemID) || null;
+    const clickedDrone = droneList.find(drone => drone.system_id === systemID) || null;
     setSelectedDrone(clickedDrone);
   };
 
