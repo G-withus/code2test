@@ -56,8 +56,8 @@ services:
       - SPRING_SQL_INIT_MODE=always
       # AWS S3 configuration (use IAM role in production)
       - CLOUD_AWS_REGION_STATIC=ap-northeast-2
-      - CLOUD_AWS_CREDENTIALS_ACCESS_KEY=AKIATG6MGWCA6XSGIKCW
-      - CLOUD_AWS_CREDENTIALS_SECRET_KEY=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
+      - CLOUD_AWS_CREDENTIALS_ACCESS_KEY=
+      - CLOUD_AWS_CREDENTIALS_SECRET_KEY=
       - CLOUD_AWS_S3_BUCKET_NAME=teledata-log-bucket
     networks:
       - testmdt-network
