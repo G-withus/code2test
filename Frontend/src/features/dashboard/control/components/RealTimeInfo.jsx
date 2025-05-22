@@ -12,7 +12,6 @@ import { FaMap } from "react-icons/fa";
 import { BsFillPrinterFill } from "react-icons/bs";
 import useTranslations from "../../../../components/Language";
 import Footer from "../../../../components/Footer";
-import FlightData from "./FlightData";
 
 
 const RealTimeInfo = () => {
@@ -219,7 +218,6 @@ const [videoView, setVideoView] = useState(false);
   const [wayPointsVisible, setWayPointsVisible] = useState(true);
   const [gpsDetails, setGpsDetails] = useState(false);
 
-  const [isMapView, setIsMapView] = useState(true);
   const searchRef = useRef(null);
 
   const shipData = [
@@ -434,30 +432,10 @@ const [videoView, setVideoView] = useState(false);
         </div>
       </>)}
 
-      <div className="absolute top-[70px] right-3 bg-transparent z-40 flex justify-between items-center gap-1">
-        <div className="w-[370px] bg-white flex justify-between items-center rounded-md shadow-lg pl-1 pt-1 pb-1">
-          <input type="text" placeholder="Quick Search" className="p-2 rounded-sm bg-transparent text-sm w-5/6" ref={searchRef} />
-          <IoMdSearch className="w-1/6 text-2xl text-[#767676] cursor-pointer" onClick={handleSearchFocus} />
-        </div>
-        
-        <div className="flex justify-center items-center gap-2 ml-4 text-[#767676]">
-          <AiOutlineMenu className={`text-xl cursor-pointer ${!isMapView ? `text-primary` : `text-[#767676]`}`}
-           onClick={() => {
-              setIsMapView(false);
-              setShipDetails(false);
-            }}/>
-          <FaMap className={`text-xl cursor-pointer ${isMapView ? `text-primary` : `text-[#767676]`}`} onClick={() => setIsMapView(true)}/>
-        </div>
-
-        <div className="flex justify-center items-center ml-4 mr-4 gap-1 text-[#767676] cursor-pointer">
-          <BsFillPrinterFill className="text-xl"/>
-          <span className="text-md">Print</span>
-        </div>
-      </div>
 
       <div className="w-full flex-1 relative">
 
-      {isMapView ? (<MapContainer
+      <MapContainer
           center={[-29.149889, -136.958702]}
           zoom={3}
           minZoom={2.5}
@@ -507,8 +485,8 @@ const [videoView, setVideoView] = useState(false);
                   }}
                 ></Marker>
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
-                {/* <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} /> */}
+                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
+                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
@@ -528,9 +506,7 @@ const [videoView, setVideoView] = useState(false);
               />
               </>
               ))}
-            </MapContainer>):
-            (<FlightData/>)
-          }
+            </MapContainer>
       </div>
 
       {videoView && <FlightMapDetails videoView={videoView} setVideoView={setVideoView} systemID={systemID}/>}
