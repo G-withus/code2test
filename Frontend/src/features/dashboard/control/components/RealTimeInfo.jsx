@@ -212,7 +212,6 @@ const RealTimeInfo = () => {
 
   
 const [videoView, setVideoView] = useState(false);
-  const [shipDetails, setShipDetails] = useState(false);
   const [wayPointsVisible, setWayPointsVisible] = useState(true);
   const [gpsDetails, setGpsDetails] = useState(false);
 
@@ -290,92 +289,6 @@ const [videoView, setVideoView] = useState(false);
         <TopBar />
       </div>
 
-      {shipDetails && (
-        <div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
-          <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
-            <span className="font-semibold">Serena ver.2</span>
-            <div className="flex justify-center items-center gap-2">
-              <img src="video_icon.png" className="text-primary cursor-pointer object-contain size-5" onClick={() => setVideoView(true)}/>
-              <RxCross2 size={"20px"} onClick={() => setShipDetails(!shipDetails)} className="text-primary cursor-pointer" />
-            </div>
-            
-          </div>
-
-          <div className="w-full object-contain">
-            <img src="shipImage_example.jpg" alt="Ship Image" className="w-full h-36" />
-          </div>
-
-
-          <div className="w-full flex pb-1 pl-3 flex-col">
-            <div className="w-full flex items-end justify-start gap-1">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Vessels Info</div>
-              <IoInformationCircle size={"20px"} className="text-gray-400" />
-            </div>
-            {shipData.map((ship, index) => (
-            <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
-              {Object.entries(ship).map(([key, value]) => (
-                <div className="w-1/2 flex flex-col mb-1" key={key}>
-                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold">{value}</div>
-                </div>
-              ))}
-            </div>))}
-          </div>
-
-
-          <div className="w-full flex pb-1 pl-3 flex-col">
-            <div className="w-full flex items-end justify-start gap-1">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Drone Info</div>
-              <IoInformationCircle size={"20px"} className="text-gray-400" />
-            </div>
-            {droneDataStatic.map((drone) => (
-            <div className="w-full flex flex-wrap mt-1 border-b-0.5 text-[14px]">
-              {Object.entries(drone).map(([key, value]) => (
-                <div className="w-1/2 flex flex-col mb-1" key={key}>
-                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold text-primary">{value}</div>
-                </div>
-              ))}
-            </div>
-            ))}
-
-          {droneRealTimeData.map((drone) => (
-            <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
-              {Object.entries(drone).map(([key, value]) => (
-                <div className="w-1/2 flex flex-col mb-2" key={key}>
-                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold">{value}</div>
-                </div>
-              ))}
-            </div>
-            ))}
-          </div>
-
-          <div className="w-full flex pt-1 pb-0 pl-3 flex-col">
-            <div className="w-full flex items-end justify-start gap-1">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Pilot Info</div>
-            </div>
-            <div className="w-full flex flex-col flex-wrap mt-2 text-[14px]">
-              <div className="w-full flex mb-2">
-                <div className="w-1/2 flex items-center text-[12px] text-gray-500">Internal pilot</div>
-                <div className="w-1/2 flex justify-center items-center font-semibold gap-1">
-                  <img src="dronePilotExample.jpg" alt="Pilot Image" className="w-7 h-7 rounded-full object-contain border-0.5" />
-                  <span className="font-semibold">name</span>
-                  <IoInformationCircle size={"15px"} className="text-gray-400" />
-                </div>
-              </div>
-              <div className="w-full flex mb-2">
-                <div className="w-1/2 flex items-center text-[12px] text-gray-500">Outside pilot</div>
-                <div className="w-1/2 flex justify-center items-center font-semibold gap-1">
-                  <img src="dronePilotExample.jpg" alt="Pilot Image" className="w-7 h-7 rounded-full object-contain border-0.5" />
-                  <span className="font-semibold">name</span>
-                  <IoInformationCircle size={"15px"} className="text-gray-400" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     {/* GPS details */}
     {gpsDetails && (
@@ -468,7 +381,7 @@ const [videoView, setVideoView] = useState(false);
                   key={drone.GCS_IP}
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
-                  eventHandlers={{ click: () => {setShipDetails(true);
+                  eventHandlers={{ click: () => {setVideoView(true);
                                                  setGpsDetails(false);
                   },
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
@@ -479,7 +392,6 @@ const [videoView, setVideoView] = useState(false);
                   position={[16.847027, 96.149715]}
                   icon={carIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setGpsDetails(true);
-                                                 setShipDetails(false);
                   },
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
