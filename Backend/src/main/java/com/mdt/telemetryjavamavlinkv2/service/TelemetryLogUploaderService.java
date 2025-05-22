@@ -12,6 +12,7 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class TelemetryLogUploaderService {
 
+
     private final S3Service s3Service;
 
     @Value("${cloud.aws.s3.bucket-name}")

@@ -7,15 +7,18 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 @Service
 public class TelemetryFileService {
 
     private final SimpleDateFormat timestampsFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat filenameTimestampFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+    private final String timestamp = filenameTimestampFormat.format(new Date());
 
     public void createLogFile(int port){
-        File logFile = new File("telemetry_logs", "telemetry_"+port +".log");
+        File logFile = new File("telemetry_logs", "telemetry_" + port + ".log-" + timestamp + ".log");
         try {
             if (logFile.createNewFile()){
                 System.out.println(logFile.getAbsolutePath());
@@ -26,7 +29,7 @@ public class TelemetryFileService {
     }
 
     public void logTelemetryData(int port, Map<String, Object> telemetryData){
-        File logFile = new File("telemetry_logs", "telemetry_" + port + ".log");
+        File logFile = new File("telemetry_logs", "telemetry_" + port + ".log-" + timestamp + ".log");
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))){
             writer.write(telemetryData.toString());
 
@@ -35,7 +38,7 @@ public class TelemetryFileService {
         }
     }
     public File getLogFile(int port) {
-        return new File("telemetry_logs", "telemetry_" + port + ".log");
+        return new File("telemetry_logs", "telemetry_" + port + ".log-" + timestamp + ".log");
     }
 
     public void deleteLogFile(int port) {

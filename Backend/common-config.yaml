@@ -1,0 +1,18 @@
+
+services:
+  network-deploy-service:
+    networks:
+      - aioceaneye
+
+  microservice-configserver-config:
+    extends:
+      service: network-deploy-service
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8071/"
+      SPRING_PROFILE_ACTIVE: default
+
+  microservice-eureka-config:
+    extends:
+      service: microservice-configserver-config
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8070/eureka/"
