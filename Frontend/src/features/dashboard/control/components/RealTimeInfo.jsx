@@ -163,8 +163,6 @@ const RealTimeInfo = () => {
               updatedAirSpeed = drone.airspeed;
               updatedGroundSpeed = drone.ground_speed;
               updatedBattery = drone.battery_current;
-              const newShipPositions = data.drones.map((drone) => drone.home_location);
-              setShipPosition(newShipPositions);
             });
   
             setDrones(updatedDrones);
@@ -471,6 +469,7 @@ const [videoView, setVideoView] = useState(false);
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setShipDetails(true);
+                                                 setGpsDetails(false);
                   },
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
@@ -480,13 +479,14 @@ const [videoView, setVideoView] = useState(false);
                   position={[16.847027, 96.149715]}
                   icon={carIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setGpsDetails(true);
+                                                 setShipDetails(false);
                   },
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
                 ></Marker>
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
-                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
+{/*                 <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
+                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} /> */}
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
