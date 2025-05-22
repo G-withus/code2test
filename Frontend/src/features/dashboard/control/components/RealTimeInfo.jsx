@@ -1,10 +1,18 @@
 import { MapContainer, TileLayer, Marker, Polyline, Popup} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import TopBar from "../../components/TopBar"; 
+import TopBar from "../../components/TopBar";
+import { RxCross2 } from "react-icons/rx";
+import { IoInformationCircle } from "react-icons/io5";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FlightMapDetails from "./FlightMapDetails";
+import { IoMdSearch } from "react-icons/io";
+import { AiOutlineMenu } from "react-icons/ai";
+import { FaMap } from "react-icons/fa";
+import { BsFillPrinterFill } from "react-icons/bs";
+import useTranslations from "../../../../components/Language";
 import Footer from "../../../../components/Footer";
+import FlightData from "./FlightData";
 
 
 const RealTimeInfo = () => {
@@ -36,8 +44,15 @@ const RealTimeInfo = () => {
       iconSize: [25, 25],
     });
 
+    const carIcon = (rotation) => 
+      new L.DivIcon({
+        className: "custom-drone-icon",
+        html: `<div style="transform: rotate(${rotation}deg);"><img src="redCarIcon.png" width="80" height="80"/></div>`,
+        iconSize: [25, 25],
+      });
+
     function HeadingLine({ position, heading }) {
-      const length = 0.15; // You can tune this for visual size
+      const length = 0.035; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
@@ -66,6 +81,10 @@ const RealTimeInfo = () => {
       weight={1.7} />;
     }
 
+    const handleSearchFocus = () => {
+      searchRef.current.focus();
+    };
+
     // const shipIcons = [
     //   "vessel(Navy).png",
     //   "vessel(blue).png",
@@ -93,12 +112,7 @@ const RealTimeInfo = () => {
 
     // console.log(shipsWithIcons)
     
-    // const shipIcon = new L.Icon({
-    //   iconUrl: getRandomIcon(),  // Assigns a random icon
-    //   iconSize: [20, 20],
-    //   iconAnchor: [10, 10], // Adjust anchor point for centering
-    //   popupAnchor: [0, -10],
-    // });
+    
 
   //       index: 0,
   //     };
@@ -201,43 +215,69 @@ const RealTimeInfo = () => {
 
   
 const [videoView, setVideoView] = useState(false);
-  // const [shipDetails, setShipDetails] = useState(false);
-  // const [wayPointsVisible, setWayPointsVisible] = useState(true);
+  const [shipDetails, setShipDetails] = useState(false);
+  const [wayPointsVisible, setWayPointsVisible] = useState(true);
+  const [gpsDetails, setGpsDetails] = useState(false);
 
-  // const [isMapView, setIsMapView] = useState(true);
-  // const searchRef = useRef(null);
+  const [isMapView, setIsMapView] = useState(true);
+  const searchRef = useRef(null);
 
-  // const shipData = [
-  //   {
-  //     Vessel: "Serena Ver.2",
-  //     Captain: "name",
-  //     Latitude: selectedDrone?.home_location?.lat ?? 0,
-  //     Longitude: selectedDrone?.home_location?.lon ?? 0,
-  //     // Latitude: lat,
-  //     // Longitude: lon,
-  //   },
-  // ];
+  const shipData = [
+    {
+      Vessel: "Serena Ver.2",
+      Captain: "name",
+      Latitude: selectedDrone?.home_location?.lat ?? 0,
+      Longitude: selectedDrone?.home_location?.lon ?? 0,
+      // Latitude: lat,
+      // Longitude: lon,
+    },
+  ];
 
-  // const droneDataStatic = [
-  //   {
-  //     "Model": systemID != null ? `VT${String(systemID).padStart(3, '0')}/${systemID}` : "VT000",
-  //     "Serial No": "MDT290I24060801",
-  //     Latitude: lat,
-  //     Longitude: lon,
-  //     Altitude: altt+" M",
-  //   }
-  // ];
+  const TopGpsData = [
+    {
+      RawGGA: "Raw GGA",
+      RawRMC: "Raw RMC",
+      Latitude: 12.345678,
+      Longitude: 34.123457,
+      Altitude: 100,
+      Speed: 23,
+      Satellites: 8,
+    },
+  ];
 
-  // const droneRealTimeData = [
-  //   {
-  //     Latitude: lat,
-  //     Longitude: lon,
-  //     "Altitude": altt+" M",
-  //     "Airspeed(m/s)": airSpeed,
-  //     "Groundspeed(m/s)": groundSpeed,
-  //     "Battery(V)": battery,
-  //   }
-  // ];
+  const BottomGpsData = [
+    {
+      RawGGA: "Raw GGA",
+      RawRMC: "Raw RMC",
+      Latitude: 12.345678,
+      Longitude: 34.123457,
+      Altitude: 100,
+      Speed: 23,
+      Satellites: 8,
+    },
+  ];
+
+
+  const droneDataStatic = [
+    {
+      "Model": systemID != null ? `VT${String(systemID).padStart(3, '0')}/${systemID}` : "VT000",
+      "Serial No": "MDT290I24060801",
+      Latitude: lat,
+      Longitude: lon,
+      Altitude: altt+" M",
+    }
+  ];
+
+  const droneRealTimeData = [
+    {
+      Latitude: lat,
+      Longitude: lon,
+      "Altitude": altt+" M",
+      "Airspeed(m/s)": airSpeed,
+      "Groundspeed(m/s)": groundSpeed,
+      "Battery(V)": battery,
+    }
+  ];
 
   console.log(altt)
 
@@ -254,9 +294,8 @@ const [videoView, setVideoView] = useState(false);
         <TopBar />
       </div>
 
-      {/* {shipDetails && (
-        <div className="absolute top-[60px] left-7 w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
-          Ship Name
+      {shipDetails && (
+        <div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">Serena ver.2</span>
             <div className="flex justify-center items-center gap-2">
@@ -340,11 +379,64 @@ const [videoView, setVideoView] = useState(false);
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
-      {/* <div className="absolute top-[70px] right-3 bg-transparent z-40 flex justify-between items-center gap-1">
+    {/* GPS details */}
+    {gpsDetails && (
+      <>
+        <div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
+          <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
+            <span className="font-semibold">GPS details</span>
+            <div className="flex justify-center items-center gap-2">
+              <RxCross2 size={"20px"} onClick={() => setGpsDetails(!gpsDetails)} className="text-primary cursor-pointer" />
+            </div>
+            
+          </div>
+
+          <div className="w-full object-contain">
+            <img src="NissanSunny.png" alt="Car Image" className="w-full h-44" />
+          </div>
+
+
+          <div className="w-full flex pb-1 pl-3 flex-col">
+            <div className="w-full flex items-center justify-start gap-1 mt-2">
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Top GPS</div>
+              <IoInformationCircle size={"20px"} className="text-gray-400" />
+            </div>
+            {TopGpsData.map((ship, index) => (
+            <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
+              {Object.entries(ship).map(([key, value]) => (
+                <div className="w-1/2 flex flex-col mb-1" key={key}>
+                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
+                  <div className="w-full flex items-center font-semibold">{value}</div>
+                </div>
+              ))}
+            </div>))}
+          </div>
+
+
+          <div className="w-full flex pb-1 pl-3 flex-col">
+            <div className="w-full flex items-end justify-start gap-1">
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Bottom GPS Data</div>
+              <IoInformationCircle size={"20px"} className="text-gray-400" />
+            </div>
+            {BottomGpsData.map((drone) => (
+            <div className="w-full flex flex-wrap mt-1 border-b-0.5 text-[14px]">
+              {Object.entries(drone).map(([key, value]) => (
+                <div className="w-1/2 flex flex-col mb-1" key={key}>
+                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
+                  <div className="w-full flex items-center font-semibold text-primary">{value}</div>
+                </div>
+              ))}
+            </div>
+            ))}
+        </div>
+        </div>
+      </>)}
+
+      <div className="absolute top-[70px] right-3 bg-transparent z-40 flex justify-between items-center gap-1">
         <div className="w-[370px] bg-white flex justify-between items-center rounded-md shadow-lg pl-1 pt-1 pb-1">
-          <input type="text" placeholder="Quicl" className="p-2 rounded-sm bg-transparent text-sm w-5/6" ref={searchRef} />
+          <input type="text" placeholder="Quick Search" className="p-2 rounded-sm bg-transparent text-sm w-5/6" ref={searchRef} />
           <IoMdSearch className="w-1/6 text-2xl text-[#767676] cursor-pointer" onClick={handleSearchFocus} />
         </div>
         
@@ -361,21 +453,25 @@ const [videoView, setVideoView] = useState(false);
           <BsFillPrinterFill className="text-xl"/>
           <span className="text-md">Print</span>
         </div>
-      </div> */}
+      </div>
 
       <div className="w-full flex-1 relative">
 
-      <MapContainer
-          center={[35.0767, 129.0921]}
-          zoom={7}
+      {isMapView ? (<MapContainer
+          center={[-29.149889, -136.958702]}
+          zoom={3}
           minZoom={2.5}
           maxZoom={18}
           style={{ height: "100vh", width: "100%" }}
-          className="z-0 w-full h-full" zoomControl={false}
+          className="z-0 w-screen h-full" zoomControl={false}
           trackResize={true}
           attributionControl={false}
-          maxBounds={[[-85, -180], [85, 180]]} // limits panning to a single world map
-          maxBoundsViscosity={1.0}>
+          // maxBounds={[[-85, -180], [85, 180]]}
+          maxBounds={[[-85, -360], [85, 360]]} 
+          maxBoundsViscosity={1.0}
+          worldCopyJump={true} // enables world map repetition when panning
+          continuousWorld={true} // allows smooth wrap-around
+          >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {/* {shipsWithIcons.map((ship, index) => (
                           <Marker
@@ -396,14 +492,23 @@ const [videoView, setVideoView] = useState(false);
                   key={drone.GCS_IP}
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
-                  eventHandlers={{ click: () => {setVideoView(true);
+                  eventHandlers={{ click: () => {setShipDetails(true);
                   },
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
                 >
+                  <Marker
+                  key={drone.GCS_IP}
+                  position={[16.847027, 96.149715]}
+                  icon={carIcon(drone.yaw)}
+                  eventHandlers={{ click: () => {setGpsDetails(true);
+                  },
+                  mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
+                  }}
+                ></Marker>
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
-                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
+                {/* <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
+                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} /> */}
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
@@ -423,7 +528,9 @@ const [videoView, setVideoView] = useState(false);
               />
               </>
               ))}
-            </MapContainer>
+            </MapContainer>):
+            (<FlightData/>)
+          }
       </div>
 
       {videoView && <FlightMapDetails videoView={videoView} setVideoView={setVideoView} systemID={systemID}/>}
@@ -433,13 +540,3 @@ const [videoView, setVideoView] = useState(false);
 };
 
 export default RealTimeInfo;
-
-// import React from 'react'
-
-// const RealTimeInfo = () => {
-//   return (
-//     <div>RealTimeInfo</div>
-//   )
-// }
-
-// export default RealTimeInfo
