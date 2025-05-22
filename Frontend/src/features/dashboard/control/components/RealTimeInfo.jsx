@@ -309,7 +309,7 @@ const [videoView, setVideoView] = useState(false);
 
           <div className="w-full flex pb-1 pl-3 flex-col">
             <div className="w-full flex items-center justify-start gap-1 mt-2">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Top GPS</div>
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold text-red-500">Top GPS</div>
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
             {TopGpsData.map((ship, index) => (
@@ -317,7 +317,7 @@ const [videoView, setVideoView] = useState(false);
               {Object.entries(ship).map(([key, value]) => (
                 <div className="w-1/2 flex flex-col mb-1" key={key}>
                   <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold">{value}</div>
+                  <div className="w-full flex items-center font-semibold text-red-500">{value}</div>
                 </div>
               ))}
             </div>))}
@@ -326,7 +326,7 @@ const [videoView, setVideoView] = useState(false);
 
           <div className="w-full flex pb-1 pl-3 flex-col">
             <div className="w-full flex items-end justify-start gap-1">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Bottom GPS Data</div>
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold text-primary">Bottom GPS Data</div>
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
             {BottomGpsData.map((drone) => (
