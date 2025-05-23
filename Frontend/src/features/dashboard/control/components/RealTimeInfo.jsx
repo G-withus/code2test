@@ -46,7 +46,7 @@ const RealTimeInfo = () => {
     const carIcon = (rotation) => 
       new L.DivIcon({
         className: "custom-drone-icon",
-        html: `<div style="transform: rotate(${rotation}deg);"><img src="redCarIcon.png" width="80" height="80"/></div>`,
+        html: `<div style="transform: rotate(${rotation}deg);"><img src="icon_car.png" width="80" height="80"/></div>`,
         iconSize: [25, 25],
       });
 
