@@ -252,7 +252,7 @@ const [videoView, setVideoView] = useState(false);
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://192.168.0.226:8765";
+      const wsUrl = "ws://192.168.171.42:8765";
       ws_Gps.current = new WebSocket(wsUrl);
 
       ws_Gps.current.onopen = () => {
