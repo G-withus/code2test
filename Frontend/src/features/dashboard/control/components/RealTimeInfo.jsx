@@ -234,8 +234,8 @@ const [videoView, setVideoView] = useState(false);
   const [heading, setHeading] = useState(0);
 
   const [topGpsData, setTopGpsData] = useState({
-    Latitude: 16.818258, 
-    Longitude: 96.190081,
+    Latitude: 16.816586,
+    Longitude: 96.192868,
     Altitude: 0,
     Speed: 0,
     Satellites: 0,
