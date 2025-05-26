@@ -28,9 +28,9 @@ const RealTimeInfo = () => {
   const [shipPosition, setShipPosition] = useState([]);
   const reconnectInterval = useRef(null);
 
-  console.log(selectedDrone)
+  // console.log(selectedDrone)
 
-  console.log(systemID)
+  // console.log(systemID)
   // console.log(shipPosition)
   // const [droneStates, setDroneStates] = useState(
   //   data.drones.reduce((acc, drone) => {
@@ -173,7 +173,7 @@ const RealTimeInfo = () => {
             setGroundSpeed(updatedGroundSpeed);
             setBattery(updatedBattery);
   
-            console.log(updatedDrones);
+            // console.log(updatedDrones);
           } else {
             console.warn("Invalid WebSocket data:", data);
           }
@@ -228,29 +228,98 @@ const [videoView, setVideoView] = useState(false);
     },
   ];
 
-  const TopGpsData = [
-    {
-      RawGGA: "Raw GGA",
-      RawRMC: "Raw RMC",
-      Latitude: 12.345678,
-      Longitude: 34.123457,
-      Altitude: 100,
-      Speed: 23,
-      Satellites: 8,
-    },
-  ];
+  const ws_Gps = useRef(null);
+  const reconnectGpsInterval = useRef(null);
+  const timeoutRef = useRef(null);
+  const [heading, setHeading] = useState(0);
 
-  const BottomGpsData = [
-    {
-      RawGGA: "Raw GGA",
-      RawRMC: "Raw RMC",
-      Latitude: 12.345678,
-      Longitude: 34.123457,
-      Altitude: 100,
-      Speed: 23,
-      Satellites: 8,
-    },
-  ];
+  const [topGpsData, setTopGpsData] = useState({
+    Latitude: 16.818258, 
+    Longitude: 96.190081,
+    Altitude: 0,
+    Speed: 0,
+    Satellites: 0,
+  });
+
+  const [bottomGpsData, setBottomGpsData] = useState({
+    Latitude: 0,
+    Longitude: 0,
+    Altitude: 0,
+    Speed: 0,
+    Satellites: 0,
+  });
+
+  useEffect(() => {
+    const connectWebSocket = () => {
+      console.log("Attempting WebSocket connection...");
+      const wsUrl = "ws://192.168.0.226:8765";
+      ws_Gps.current = new WebSocket(wsUrl);
+
+      ws_Gps.current.onopen = () => {
+        console.log("WebSocket connected.");
+        if (reconnectGpsInterval.current) {
+          clearInterval(reconnectGpsInterval.current);
+          reconnectGpsInterval.current = null;
+        }
+      };
+
+      ws_Gps.current.onmessage = (event) => {
+        clearTimeout(timeoutRef.current);
+
+        try {
+          const data = JSON.parse(event.data);
+          setHeading(data.heading);
+
+          // ✅ Handle Top/Bottom GPS Data
+          if (Array.isArray(data.gps_data)) {
+            data.gps_data.forEach((gps) => {
+              const gpsInfo = {
+                Latitude: gps.latitude,
+                Longitude: gps.longitude,
+                Altitude: gps.altitude,
+                Speed: gps.speed,
+                Satellites: gps.satellites,
+              };
+
+              if (gps.gps === "top_gps") {
+                setTopGpsData(gpsInfo);
+              } else if (gps.gps === "bottom_gps") {
+                setBottomGpsData(gpsInfo);
+              }
+            });
+          }
+
+        } catch (err) {
+          console.error("Error parsing WebSocket data:", err);
+        }
+
+        timeoutRef.current = setTimeout(() => {
+          console.log("No GPS update in 5s, clearing...");
+          setTopGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
+          setBottomGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
+        }, 5000);
+      };
+
+      ws_Gps.current.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+
+      ws_Gps.current.onclose = () => {
+        console.warn("WebSocket disconnected. Attempting reconnect...");
+        if (!reconnectInterval.current) {
+          reconnectGpsInterval.current = setInterval(connectWebSocket, 5000);
+        }
+      };
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws_Gps.current) ws.current.close();
+      if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
+      clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
 
   const droneDataStatic = [
@@ -274,7 +343,7 @@ const [videoView, setVideoView] = useState(false);
     }
   ];
 
-  console.log(altt)
+  // console.log(altt)
 
   const handleSelectedDrone = (systemID) => {
     const droneList = Object.values(drones); // convert to array
@@ -312,33 +381,31 @@ const [videoView, setVideoView] = useState(false);
               <div className="flex justify-center items-center text-[16px] text-center font-semibold text-red-500">Top GPS</div>
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
-            {TopGpsData.map((ship, index) => (
             <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
-              {Object.entries(ship).map(([key, value]) => (
+              {Object.entries(topGpsData).map(([key, value]) => (
                 <div className="w-1/2 flex flex-col mb-1" key={key}>
                   <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
                   <div className="w-full flex items-center font-semibold text-red-500">{value}</div>
                 </div>
               ))}
-            </div>))}
+            </div>
           </div>
 
 
           <div className="w-full flex pb-1 pl-3 flex-col">
             <div className="w-full flex items-end justify-start gap-1">
-              <div className="flex justify-center items-center text-[16px] text-center font-semibold text-primary">Bottom GPS Data</div>
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold text-primary">Bottom GPS</div>
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
-            {BottomGpsData.map((drone) => (
+
             <div className="w-full flex flex-wrap mt-1 border-b-0.5 text-[14px]">
-              {Object.entries(drone).map(([key, value]) => (
+              {Object.entries(bottomGpsData).map(([key, value]) => (
                 <div className="w-1/2 flex flex-col mb-1" key={key}>
                   <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
                   <div className="w-full flex items-center font-semibold text-primary">{value}</div>
                 </div>
               ))}
             </div>
-            ))}
         </div>
         </div>
       </>)}
@@ -375,10 +442,10 @@ const [videoView, setVideoView] = useState(false);
                             eventHandlers={{ click: () => setShipDetails(true) }}
                           />
                         ))} */}
-              {Object.values(drones).map((drone) => (
+              {Object.values(drones).map((drone, index) => (
                 <>
                 <Marker
-                  key={drone.GCS_IP}
+                  key={index}
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
                   eventHandlers={{ click: () => {setVideoView(true);
@@ -387,15 +454,6 @@ const [videoView, setVideoView] = useState(false);
                   mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
                   }}
                 >
-                  <Marker
-                  key={drone.GCS_IP}
-                  position={[16.847027, 96.149715]}
-                  icon={carIcon(drone.yaw)}
-                  eventHandlers={{ click: () => {setGpsDetails(true);
-                  },
-                  mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
-                  }}
-                ></Marker>
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
 {/*                 <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
                 <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} /> */}
@@ -418,6 +476,18 @@ const [videoView, setVideoView] = useState(false);
               />
               </>
               ))}
+              <Marker
+                  key={topGpsData.Satellites}
+                  position={[topGpsData.Latitude, topGpsData.Longitude]}
+                  icon={carIcon(heading)}
+                  eventHandlers={{ click: () => {setGpsDetails(true);
+                  },
+                  }}
+                >
+                  <Popup>
+                    <strong>Heading: </strong>{heading}<br />
+                  </Popup>
+                </Marker>
             </MapContainer>
       </div>
 
