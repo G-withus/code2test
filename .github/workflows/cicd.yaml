@@ -70,14 +70,14 @@ jobs:
 
             cd /home/${{ secrets.EC2_USER }}
 
-            # Remove folder if it exists and not a git repo
+            # Remove folder if exists and is not a git repo
             if [ -d "communication-test" ]; then
               if [ ! -d "communication-test/.git" ]; then
                 rm -rf communication-test
               fi
             fi
 
-            # Clone if not exists, or clean update if it is a git repo
+            # Clone or update the repo
             if [ ! -d "communication-test/.git" ]; then
               git clone https://github.com/${{ github.repository }}.git communication-test
             else
@@ -89,14 +89,20 @@ jobs:
 
             cd communication-test
 
-            # Stop and remove current containers
-            docker compose down
-        
-            #added docker compose with credentials
-            echo "${{ secrets.DOCKER_COMPOSE }}" > docker-compose.yaml
-            chmod 600 docker-compose.yaml            
+            # Inject docker-compose file from secret
+            printf "%s" "${{ secrets.DOCKER_COMPOSE }}" > docker-compose.yaml
+            chmod 600 docker-compose.yaml
 
-            # Build and start new containers
+            # Validate docker-compose.yaml is not empty
+            if [ ! -s docker-compose.yaml ]; then
+              echo "ERROR: docker-compose.yaml is empty or missing."
+              exit 1
+            fi
+
+            # Stop and remove running containers
+            docker compose down
+
+            # Start containers with build
             docker compose up --build -d
 
             # Clean up unused Docker images and containers
