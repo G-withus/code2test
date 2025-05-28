@@ -54,7 +54,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const janusRef = useRef(null);
     const streamingRef = useRef(null);
     const remoteStreamRef = useRef(null);
-    const server = "ws://43.201.9.168:8188"; // Janus WebSocket Server
+    const server = "ws://3.37.36.190:8188"; // Janus WebSocket Server
     const streamId = 1234;
     const secret = "adminpwd";
     const mountpointName = "Drone Video Stream";
