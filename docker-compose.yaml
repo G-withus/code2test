@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 services:
   frontend:
     build:
@@ -71,3 +72,5 @@ networks:
   testmdt-network:
     driver: bridge
 
+=======
+>>>>>>> 17f451a5b1c641ca94c2272fee78843ca5bdb3ac
