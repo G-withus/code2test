@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-=======
-version: '3.8'
 
 services:
   frontend:
@@ -73,4 +70,4 @@ services:
 networks:
   testmdt-network:
     driver: bridge
->>>>>>> 217bfc9b40b429f6fabd0f2d607c49a91b9febe4
+

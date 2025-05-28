@@ -20,7 +20,7 @@ const PortTestCreate = () => {
     setIsSending(true);
 
     try {
-      const response = await fetch("http://3.36.130.46:8080/api/ports/register", {
+      const response = await fetch("http://13.209.33.15:8080/api/ports/register", {
         method: "POST",
         body: JSON.stringify({
           ipAddress: data.ipAddress,
@@ -34,7 +34,7 @@ const PortTestCreate = () => {
       if (response.status === 200) {
         toast.success("Port create successfully");
         reset();
-        mutate(`http://3.36.130.46:8080/api/ports/list`);
+        mutate(`http://13.209.33.15:8080/api/ports/list`);
       } else if (response.status === 409) {
         toast.error("Port is already registered");
         reset();
@@ -108,7 +108,7 @@ const PortTestCreate = () => {
 
       <div className="flex gap-1 w-full justify-center items-center mt-2 text-sm">
         <span>Remote-Server IP:</span>
-        <span className="text-blue-600">3.36.130.46</span>
+        <span className="text-blue-600">13.209.33.15</span>
       </div>
 
       <PortListPage />

@@ -6,7 +6,7 @@ import {
   } from "@reduxjs/toolkit";
   import axios from "axios";
   
-  const VITE_API_URL = "http://3.36.130.46:5004";
+  const VITE_API_URL = "http://13.209.33.15:5004";
 
   export const fetchFlightData =createAsyncThunk(
     "flightData/fetchFlightData",

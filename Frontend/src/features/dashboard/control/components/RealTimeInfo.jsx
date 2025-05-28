@@ -128,7 +128,7 @@ const RealTimeInfo = () => {
   
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://3.36.130.46:8080/telemetry";
+      const wsUrl = "ws://13.209.33.15:8080/telemetry";
       ws.current = new WebSocket(wsUrl);
   
 
