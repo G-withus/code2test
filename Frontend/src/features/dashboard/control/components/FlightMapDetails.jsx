@@ -554,8 +554,7 @@
 
 // export default VideoViewer;
 
-=======
->>>>>>> 17f451a5b1c641ca94c2272fee78843ca5bdb3ac
+
 import { useState, useRef, useEffect, useMemo } from "react";
 import { RxCross2 } from "react-icons/rx";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
