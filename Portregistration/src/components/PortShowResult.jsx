@@ -8,7 +8,7 @@ const fetcher = (url) => fetch(url).then((res) => res.json());
 
 const PortShowResult = () => {
   const { data, isLoading, error } = useSWR(
-   "http://3.34.40.154:8080/api/ports/list",
+   "http://3.36.130.46:8080/api/ports/list",
     fetcher
   );
 

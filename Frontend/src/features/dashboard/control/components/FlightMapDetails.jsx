@@ -228,7 +228,7 @@
 //       useEffect(() => {
 //         const connectWebSocket = () => {
 //           console.log("Attempting WebSocket connection...");
-//           const wsUrl = "ws://3.34.40.154:8080/telemetry";
+//           const wsUrl = "ws://3.36.130.46:8080/telemetry";
 //           ws.current = new WebSocket(wsUrl);
     
 //           ws.current.onopen = () => {
@@ -662,7 +662,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const janusRef = useRef(null);
     const streamingRef = useRef(null);
     const remoteStreamRef = useRef(null);
-    const server = "ws://43.201.9.168:8188"; // Janus WebSocket Server
+    const server = "ws://3.37.36.190:8188"; // Janus WebSocket Server
     const streamId = 1234;
     const secret = "adminpwd";
     const mountpointName = "Drone Video Stream";
@@ -841,7 +841,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
       useEffect(() => {
         const connectWebSocket = () => {
           console.log("Attempting WebSocket connection...");
-          const wsUrl = "ws://3.34.40.154:8080/telemetry";
+          const wsUrl = "ws://3.36.130.46:8080/telemetry";
           ws.current = new WebSocket(wsUrl);
     
           ws.current.onopen = () => {

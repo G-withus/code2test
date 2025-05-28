@@ -13,11 +13,11 @@ const PortRow = ({ port }) => {
   const handleDeleteBtn = async () => {
     setIsDeleting(true);
 
-    await fetch(`http://3.34.40.154:8080/api/ports/delete/${id}`, {
+    await fetch(`http://3.36.130.46:8080/api/ports/delete/${id}`, {
       method: "DELETE",
     });
     toast.success("Port deleted successfully");
-    mutate("http://3.34.40.154:8080/api/ports/list");
+    mutate("http://3.36.130.46:8080/api/ports/list");
   };
   return (
     <>

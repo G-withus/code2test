@@ -1,6 +1,6 @@
 
 
-// export const portApiUrl = `http://3.34.40.154:8080/api/ports`;
+// export const portApiUrl = `http://3.36.130.46:8080/api/ports`;
 
 // // Create (POST)
 // export const storePort = (data) => {

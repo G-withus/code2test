@@ -91,6 +91,10 @@ jobs:
 
             # Stop and remove current containers
             docker compose down
+        
+            #added docker compose with credentials
+            echo "${{ secrets.DOCKER_COMPOSE }}" > docker-compose.yaml
+            chmod 600 docker-compose.yaml            
 
             # Build and start new containers
             docker compose up --build -d
