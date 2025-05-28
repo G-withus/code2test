@@ -927,32 +927,32 @@ const VideoViewer = ({setVideoView, systemID}) => {
     //     popupAnchor: [0, -40],
     //   });
 
-    const shipIcons = [
-          "vessel(Navy).png",
-          "vessel(blue).png",
-          "vessel(green).png",
-          "vessel(lightYellow).png",
-          "vessel(olive).png",
-          "vessel(orange).png",
-          "vessel(pink).png",
-          "vessel(Purple).png",
-          "vessel(red).png",
-          "vessel(Yellow).png",
-        ];
+    // const shipIcons = [
+    //       "vessel(Navy).png",
+    //       "vessel(blue).png",
+    //       "vessel(green).png",
+    //       "vessel(lightYellow).png",
+    //       "vessel(olive).png",
+    //       "vessel(orange).png",
+    //       "vessel(pink).png",
+    //       "vessel(Purple).png",
+    //       "vessel(red).png",
+    //       "vessel(Yellow).png",
+    //     ];
         
-        const getShipIcon = (index) => {
-          const hash = index;
-          return shipIcons[hash % shipIcons.length];
-        };
+    //     const getShipIcon = (index) => {
+    //       const hash = index;
+    //       return shipIcons[hash % shipIcons.length];
+    //     };
         
-        const shipsWithIcons = useMemo(() => {
-          return Object.entries(shipPosition).map((ship, index) => ({
-            ...ship,
-            icon: getShipIcon(index),
-          }));
-        }, [shipPosition]);
+    //     const shipsWithIcons = useMemo(() => {
+    //       return Object.entries(shipPosition).map((ship, index) => ({
+    //         ...ship,
+    //         icon: getShipIcon(index),
+    //       }));
+    //     }, [shipPosition]);
 
-        console.log(shipsWithIcons)
+    //     console.log(shipsWithIcons)
       
 
     // Handle zoom for each video
@@ -1129,8 +1129,8 @@ const VideoViewer = ({setVideoView, systemID}) => {
                   </Popup>
                 </Marker>
                <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
-               <HeadingLineOrange position={[drones.lat, drones.lon]} heading={drones.target_heading} />
-               <HeadingLineBlack position={[drones.lat, drones.lon]} heading={Math.floor(drones.previous_heading / 100)} />
+{/*                <HeadingLineOrange position={[drones.lat, drones.lon]} heading={drones.target_heading} />
+               <HeadingLineBlack position={[drones.lat, drones.lon]} heading={Math.floor(drones.previous_heading / 100)} /> */}
                <FollowDrone lat={drones.lat} lon={drones.lon} />
                 <Polyline
                   key={drones.GCS_IP}
