@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // import { useState, useRef, useEffect, useMemo } from "react";
 // import { RxCross2 } from "react-icons/rx";
 // import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
