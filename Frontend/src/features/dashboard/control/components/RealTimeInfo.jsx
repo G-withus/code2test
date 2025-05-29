@@ -51,7 +51,7 @@ const RealTimeInfo = () => {
       });
 
     function HeadingLine({ position, heading }) {
-      const length = 0.035; // You can tune this for visual size
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
@@ -61,7 +61,7 @@ const RealTimeInfo = () => {
     }
 
   function HeadingLineOrange({ position, heading }) {
-      const length = 0.15; // You can tune this for visual size
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
@@ -71,7 +71,7 @@ const RealTimeInfo = () => {
     }
 
   function HeadingLineGreen({ position, heading }) {
-      const length = 0.15; // You can tune this for visual size
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
