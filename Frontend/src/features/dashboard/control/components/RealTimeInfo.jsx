@@ -66,7 +66,7 @@ const RealTimeInfo = () => {
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
       const line = [position, [endLat, endLng]];
-      return <Polyline positions={line} color="#FF4D00" opacity={0.8}
+      return <Polyline positions={line} color="#fcc44c" opacity={0.8}
       weight={1.7} />;
     }
 
@@ -455,8 +455,8 @@ const [videoView, setVideoView] = useState(false);
                   }}
                 >
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
-                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineGreen position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
+                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
+                <HeadingLineGreen position={[drone.lat, drone.lon]} heading={drone.target_heading} />
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
