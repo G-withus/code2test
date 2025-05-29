@@ -45,7 +45,7 @@ public class TelemetrySchedulerService {
                 data.put("timestamp", timestampFormat.format(new Date()));
 
                 if (!portLogStarted.containsKey(port)) {
-                    telemetryFileService.createLogFile(port);
+                    telemetryFileService.createLogFile(port,data);
                     portLogStarted.put(port, true);
                 }
 
@@ -61,9 +61,10 @@ public class TelemetrySchedulerService {
         List<Integer> disconnectedPorts = new ArrayList<>();
         for (Integer port : portLogStarted.keySet()) {
             if (!activePorts.contains(port)) {
-                File logFile = telemetryFileService.getLogFile(port);
+                Map<String, Object> data = telemetryDataMap.get(port);
+                File logFile = telemetryFileService.getLogFile(port,data);
                 uploaderService.compressAndUploadLogFile(logFile, port);
-                telemetryFileService.deleteLogFile(port);
+                telemetryFileService.deleteLogFile(port,data);
                 disconnectedPorts.add(port);
             }
         }

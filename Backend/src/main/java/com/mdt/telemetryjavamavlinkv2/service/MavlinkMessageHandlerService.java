@@ -28,8 +28,13 @@ public class MavlinkMessageHandlerService {
     private final Set<Integer> activePorts = ConcurrentHashMap.newKeySet();
     // Store the last update timestamp for each port.
     private final Map<Integer, Long> lastTelemetryUpdate = new ConcurrentHashMap<>();
-
-
+    private final Map<Integer, double[]> lastKnownPosition = new ConcurrentHashMap<>();
+    private boolean isAirborne = false;
+    private long startTime = 0;
+    private long timeInAir = 0; // stored in SECONDS now
+    private static long flightTime = 0;
+    private static int totalTime = 0;
+    private static boolean isFly = false;
 
 
     private LinkedHashMap<String, Object> initializeTelemetryData() {
@@ -37,12 +42,16 @@ public class MavlinkMessageHandlerService {
         data.put("port",0.0);
         data.put("GCS_IP", "Unknown");
         data.put("system_id", "Unknown");
+        data.put("flight_status", 0);
+        data.put("auto_time",0.0);
         data.put("lat", 0.0);
         data.put("lon", 0.0);
         data.put("alt", 0.0);
         data.put("dist_traveled", 0.0);
         data.put("wp_dist", 0);
         data.put("heading", 0);
+        data.put("target_heading",0);
+        data.put("previous_heading",0);
         data.put("dist_to_home", 0.0);
         data.put("vertical_speed", 0.0);
         data.put("ground_speed", 0.0);
@@ -66,8 +75,6 @@ public class MavlinkMessageHandlerService {
         return data;
     }
 
-
-
     public void handleMessage(MavlinkMessage<?> message, int port, DatagramSocket udpSocket,
                               InetAddress senderAddress, int senderPort) {
 
@@ -86,7 +93,6 @@ public class MavlinkMessageHandlerService {
         lastTelemetryUpdate.put(port, System.currentTimeMillis());
 
 
-
         // Process different types of MAVLink messages.
         if (message.getPayload() instanceof MissionCount missionCount) {
             System.out.println("✅ Received MISSION_COUNT on port " + port + ": " + missionCount.count());
@@ -102,21 +108,33 @@ public class MavlinkMessageHandlerService {
             Map<String, Double> homeLocation = homeLocations.getOrDefault(port, Map.of("lat", 0.0, "lon", 0.0));
             double  distToHome = calculateDistance(currentLat, currentLon, homeLocation.get("lat"), homeLocation.get("lon")) * 1000.0;
             telemetryData.put("dist_to_home", distToHome);
+            // ✅ Calculate distance traveled
+            double[] lastPos = lastKnownPosition.get(port);
+            if (lastPos != null) {
+                double segmentDistance = calculateDistance(lastPos[0], lastPos[1], currentLat, currentLon) * 1000.0; // meters
+                double currentDist = (double) telemetryData.getOrDefault("dist_traveled", 0.0);
+                telemetryData.put("dist_traveled", currentDist + segmentDistance);
+            }
+
+            // ✅ Update last known position
+            lastKnownPosition.put(port, new double[]{currentLat, currentLon});
+
             telemetryData.put("lat", currentLat);
             telemetryData.put("lon", currentLon);
             telemetryData.put("alt", currentAlt);
+            telemetryData.put("previous_heading", globalPositionInt.hdg());
+            telemetryData.put("time_in_air", calculateTimeInAir(currentAlt));
         } else if (message.getPayload() instanceof NavControllerOutput navControllerOutput) {
             telemetryData.put("wp_dist", navControllerOutput.wpDist());
+            telemetryData.put("target_heading",navControllerOutput.navBearing());
 
-        } else if (message.getPayload() instanceof VfrHud vfrHud) {
-
-            telemetryData.put("heading", vfrHud.heading());
-
-        } else if (message.getPayload() instanceof VfrHud vfrHud) {
+        }  else if (message.getPayload() instanceof VfrHud vfrHud) {
             double groundSpeed = vfrHud.groundspeed(); // Speed in m/s
             telemetryData.put("airspeed", vfrHud.airspeed());
             telemetryData.put("ground_speed", vfrHud.groundspeed());
             telemetryData.put("vertical_speed", vfrHud.climb());
+            telemetryData.put("heading", vfrHud.heading());
+
 
             int wpDist = (int) telemetryData.get("wp_dist");
 
@@ -140,12 +158,24 @@ public class MavlinkMessageHandlerService {
             telemetryData.put("battery_voltage", sysStatus.voltageBattery());
             telemetryData.put("battery_current", sysStatus.currentBattery());
         } else if (message.getPayload() instanceof ServoOutputRaw servoOutputRaw) {
+            int ch3out=servoOutputRaw.servo3Raw();
+            int timeInSeconds = calculateFlightTime(ch3out);
+            telemetryData.put("auto_time",timeInSeconds);
+
+            if(ch3out > 1050){
+                telemetryData.put("flight_status", 1);
+            }
+            else {
+                telemetryData.put("flight_status", 0);
+            }
+
             telemetryData.put("ch3out", servoOutputRaw.servo3Raw());
             telemetryData.put("ch3percent", String.format("%.2f", ((servoOutputRaw.servo3Raw() - 1000.0) / 1000.0) * 100));
             telemetryData.put("ch9out", servoOutputRaw.servo9Raw());
             telemetryData.put("ch10out", servoOutputRaw.servo10Raw());
             telemetryData.put("ch11out", servoOutputRaw.servo11Raw());
             telemetryData.put("ch12out", servoOutputRaw.servo12Raw());
+
         } else if (message.getPayload() instanceof Wind wind) {
             telemetryData.put("wind_vel", wind.speed());
         } else if (message.getPayload() instanceof GpsRawInt gpsRawInt) {
@@ -211,6 +241,51 @@ public class MavlinkMessageHandlerService {
                         Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    public static int calculateFlightTime(int ch3out) {
+        if (ch3out > 1050) {
+            if (!isFly) {
+                flightTime = System.currentTimeMillis();
+                isFly = true;
+            } else {
+                long now = System.currentTimeMillis();
+                totalTime = (int)((now - flightTime) / 1000);
+            }
+        } else {
+            if (isFly) {
+                long now = System.currentTimeMillis();
+                totalTime = (int)((now - flightTime) / 1000);
+                isFly = false;
+            }
+        }
+        return totalTime;
+    }
+
+    public long calculateTimeInAir(double altitude) {
+        System.out.println("\nCurrent altitude: " + altitude);
+
+        // Takeoff
+        if (altitude > 0.9) {
+            if (!isAirborne) {
+                isAirborne = true;
+                startTime = System.currentTimeMillis();
+            } else {
+                // Drone is in the air, return live timeInAir
+                long now = System.currentTimeMillis();
+                return (now - startTime) / 1000; // live seconds
+            }
+        }
+
+        // Landing
+        else if (altitude <= 0.9 && isAirborne) {
+            long endTime = System.currentTimeMillis();
+            timeInAir = (endTime - startTime) / 1000; // save final time
+            isAirborne = false;
+        }
+
+        // Return stored time if landed or idle
+        return timeInAir;
     }
 
 
