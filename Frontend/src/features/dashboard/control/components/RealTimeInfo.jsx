@@ -231,7 +231,8 @@ const [videoView, setVideoView] = useState(false);
   const ws_Gps = useRef(null);
   const reconnectGpsInterval = useRef(null);
   const timeoutRef = useRef(null);
-  const [heading, setHeading] = useState(0);
+  const [heading, setHeading] = useState(123.4);
+  const [gpsId, setGpsId] = useState("10000000e123456be");
 
   const [topGpsData, setTopGpsData] = useState({
     Latitude: 16.816586,
@@ -252,7 +253,7 @@ const [videoView, setVideoView] = useState(false);
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://192.168.171.42:8765";
+      const wsUrl = "ws://172.20.10.3:8765";
       ws_Gps.current = new WebSocket(wsUrl);
 
       ws_Gps.current.onopen = () => {
@@ -269,6 +270,7 @@ const [videoView, setVideoView] = useState(false);
         try {
           const data = JSON.parse(event.data);
           setHeading(data.heading);
+          setGpsId(data.device_id);
 
           // ✅ Handle Top/Bottom GPS Data
           if (Array.isArray(data.gps_data)) {
@@ -372,9 +374,14 @@ const [videoView, setVideoView] = useState(false);
           </div>
 
           <div className="w-full object-contain">
-            <img src="NissanSunny.png" alt="Car Image" className="w-full h-44" />
+            <img src="car_Hijet.png" alt="Car Image" className="w-full h-44" />
           </div>
 
+          <div className="w-full flex justify-between items-center pb-1 pl-1 mt-2 text-[9.5px] font-bold">
+            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{gpsId}</span></div>
+            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{heading}°</span></div>
+            <div></div>
+          </div>
 
           <div className="w-full flex pb-1 pl-3 flex-col">
             <div className="w-full flex items-center justify-start gap-1 mt-2">
