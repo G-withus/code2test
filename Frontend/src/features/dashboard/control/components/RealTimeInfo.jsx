@@ -253,9 +253,9 @@ const [videoView, setVideoView] = useState(false);
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://172.20.10.3:8765";
+      const wsUrl = "ws://13.209.33.15:4001";
       ws_Gps.current = new WebSocket(wsUrl);
-
+  
       ws_Gps.current.onopen = () => {
         console.log("WebSocket connected.");
         if (reconnectGpsInterval.current) {
@@ -263,65 +263,74 @@ const [videoView, setVideoView] = useState(false);
           reconnectGpsInterval.current = null;
         }
       };
-
+  
       ws_Gps.current.onmessage = (event) => {
         clearTimeout(timeoutRef.current);
-
+  
         try {
-          const data = JSON.parse(event.data);
-          setHeading(data.heading);
-          setGpsId(data.device_id);
-
-          // ✅ Handle Top/Bottom GPS Data
-          if (Array.isArray(data.gps_data)) {
-            data.gps_data.forEach((gps) => {
-              const gpsInfo = {
-                Latitude: gps.latitude,
-                Longitude: gps.longitude,
-                Altitude: gps.altitude,
-                Speed: gps.speed,
-                Satellites: gps.satellites,
-              };
-
-              if (gps.gps === "top_gps") {
-                setTopGpsData(gpsInfo);
-              } else if (gps.gps === "bottom_gps") {
-                setBottomGpsData(gpsInfo);
-              }
-            });
+          const message = JSON.parse(event.data);
+          console.log(message);
+  
+          if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
+            const ship = message.ships[0];
+            console.log(ship);
+  
+            if(ship.heading !== null) setHeading(ship.heading);
+            setGpsId(ship.device_id);
+  
+            if (Array.isArray(ship.gps_data)) {
+              ship.gps_data.forEach((gps) => {
+                const gpsInfo = {
+                  Latitude: gps.latitude,
+                  Longitude: gps.longitude,
+                  Altitude: gps.altitude,
+                  Speed: gps.speed,
+                  Satellites: gps.satellites,
+                };
+  
+                if (gps.gps === "top_gps") {
+                  setTopGpsData(gpsInfo);
+                } else if (gps.gps === "bottom_gps") {
+                  setBottomGpsData(gpsInfo);
+                }
+              });
+            }
           }
-
+  
         } catch (err) {
           console.error("Error parsing WebSocket data:", err);
         }
-
+  
         timeoutRef.current = setTimeout(() => {
           console.log("No GPS update in 5s, clearing...");
           setTopGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
           setBottomGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
         }, 5000);
       };
-
+  
       ws_Gps.current.onerror = (error) => {
         console.error("WebSocket error:", error);
       };
-
+  
       ws_Gps.current.onclose = () => {
         console.warn("WebSocket disconnected. Attempting reconnect...");
-        if (!reconnectInterval.current) {
+        if (!reconnectGpsInterval.current) {
           reconnectGpsInterval.current = setInterval(connectWebSocket, 5000);
         }
       };
     };
-
+  
+    // 👉 Call the connection function AFTER definition
     connectWebSocket();
-
+  
+    // ✅ Cleanup on unmount
     return () => {
-      if (ws_Gps.current) ws.current.close();
+      if (ws_Gps.current) ws_Gps.current.close();
       if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
       clearTimeout(timeoutRef.current);
     };
   }, []);
+  
 
 
   const droneDataStatic = [
