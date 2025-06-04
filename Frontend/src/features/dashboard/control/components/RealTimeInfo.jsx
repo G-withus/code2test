@@ -51,32 +51,32 @@ const RealTimeInfo = () => {
       });
 
     function HeadingLine({ position, heading }) {
-      const length = 0.035; // You can tune this for visual size
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
       const line = [position, [endLat, endLng]];
-      return <Polyline positions={line} color="#224CB7" opacity={0.8}
+      return <Polyline positions={line} color="#f20530" opacity={0.8}
       weight={1.7} />;
     }
 
   function HeadingLineOrange({ position, heading }) {
-      const length = 0.15; // You can tune this for visual size
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
       const line = [position, [endLat, endLng]];
-      return <Polyline positions={line} color="#FF4D00" opacity={0.8}
+      return <Polyline positions={line} color="#fcc44c" opacity={0.8}
       weight={1.7} />;
     }
 
-  function HeadingLineBlack({ position, heading }) {
-      const length = 0.15; // You can tune this for visual size
+  function HeadingLineGreen({ position, heading }) {
+      const length = 0.065; // You can tune this for visual size
       const angleRad = (heading * Math.PI) / 180;
       const endLat = position[0] + length * Math.cos(angleRad);
       const endLng = position[1] + length * Math.sin(angleRad);
       const line = [position, [endLat, endLng]];
-      return <Polyline positions={line} color="#000000" opacity={0.8}
+      return <Polyline positions={line} color="#02a32d" opacity={0.8}
       weight={1.7} />;
     }
 
@@ -231,7 +231,8 @@ const [videoView, setVideoView] = useState(false);
   const ws_Gps = useRef(null);
   const reconnectGpsInterval = useRef(null);
   const timeoutRef = useRef(null);
-  const [heading, setHeading] = useState(0);
+  const [heading, setHeading] = useState(123.4);
+  const [gpsId, setGpsId] = useState("10000000e123456be");
 
   const [topGpsData, setTopGpsData] = useState({
     Latitude: 16.816586,
@@ -252,9 +253,9 @@ const [videoView, setVideoView] = useState(false);
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://192.168.171.42:8765";
+      const wsUrl = "ws://13.209.33.15:4001";
       ws_Gps.current = new WebSocket(wsUrl);
-
+  
       ws_Gps.current.onopen = () => {
         console.log("WebSocket connected.");
         if (reconnectGpsInterval.current) {
@@ -262,64 +263,74 @@ const [videoView, setVideoView] = useState(false);
           reconnectGpsInterval.current = null;
         }
       };
-
+  
       ws_Gps.current.onmessage = (event) => {
         clearTimeout(timeoutRef.current);
-
+  
         try {
-          const data = JSON.parse(event.data);
-          setHeading(data.heading);
-
-          // ✅ Handle Top/Bottom GPS Data
-          if (Array.isArray(data.gps_data)) {
-            data.gps_data.forEach((gps) => {
-              const gpsInfo = {
-                Latitude: gps.latitude,
-                Longitude: gps.longitude,
-                Altitude: gps.altitude,
-                Speed: gps.speed,
-                Satellites: gps.satellites,
-              };
-
-              if (gps.gps === "top_gps") {
-                setTopGpsData(gpsInfo);
-              } else if (gps.gps === "bottom_gps") {
-                setBottomGpsData(gpsInfo);
-              }
-            });
+          const message = JSON.parse(event.data);
+          console.log(message);
+  
+          if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
+            const ship = message.ships[0];
+            console.log(ship);
+  
+            if(ship.heading !== null) setHeading(ship.heading);
+            setGpsId(ship.device_id);
+  
+            if (Array.isArray(ship.gps_data)) {
+              ship.gps_data.forEach((gps) => {
+                const gpsInfo = {
+                  Latitude: gps.latitude,
+                  Longitude: gps.longitude,
+                  Altitude: gps.altitude,
+                  Speed: gps.speed,
+                  Satellites: gps.satellites,
+                };
+  
+                if (gps.gps === "top_gps") {
+                  setTopGpsData(gpsInfo);
+                } else if (gps.gps === "bottom_gps") {
+                  setBottomGpsData(gpsInfo);
+                }
+              });
+            }
           }
-
+  
         } catch (err) {
           console.error("Error parsing WebSocket data:", err);
         }
-
+  
         timeoutRef.current = setTimeout(() => {
           console.log("No GPS update in 5s, clearing...");
           setTopGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
           setBottomGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
         }, 5000);
       };
-
+  
       ws_Gps.current.onerror = (error) => {
         console.error("WebSocket error:", error);
       };
-
+  
       ws_Gps.current.onclose = () => {
         console.warn("WebSocket disconnected. Attempting reconnect...");
-        if (!reconnectInterval.current) {
+        if (!reconnectGpsInterval.current) {
           reconnectGpsInterval.current = setInterval(connectWebSocket, 5000);
         }
       };
     };
-
+  
+    // 👉 Call the connection function AFTER definition
     connectWebSocket();
-
+  
+    // ✅ Cleanup on unmount
     return () => {
-      if (ws_Gps.current) ws.current.close();
+      if (ws_Gps.current) ws_Gps.current.close();
       if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
       clearTimeout(timeoutRef.current);
     };
   }, []);
+  
 
 
   const droneDataStatic = [
@@ -372,9 +383,14 @@ const [videoView, setVideoView] = useState(false);
           </div>
 
           <div className="w-full object-contain">
-            <img src="NissanSunny.png" alt="Car Image" className="w-full h-44" />
+            <img src="car_Hijet.png" alt="Car Image" className="w-full h-44" />
           </div>
 
+          <div className="w-full flex justify-between items-center pb-1 pl-1 mt-2 text-[9.5px] font-bold">
+            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{gpsId}</span></div>
+            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{heading}°</span></div>
+            <div></div>
+          </div>
 
           <div className="w-full flex pb-1 pl-3 flex-col">
             <div className="w-full flex items-center justify-start gap-1 mt-2">
@@ -455,8 +471,8 @@ const [videoView, setVideoView] = useState(false);
                   }}
                 >
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
-{/*                 <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.target_heading} />
-                <HeadingLineBlack position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} /> */}
+                <HeadingLineOrange position={[drone.lat, drone.lon]} heading={drone.previous_heading / 100} />
+                <HeadingLineGreen position={[drone.lat, drone.lon]} heading={drone.target_heading} />
                   <Popup>
                     <div>
                     <strong>Drone id:</strong> VT{String(drone.system_id).padStart(3, '0')} / {drone.system_id} <br />
