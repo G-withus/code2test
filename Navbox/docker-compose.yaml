@@ -1,0 +1,18 @@
+
+services:
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ship-websocket-server
+    ports:
+      - "4000-4050:4000-4050"
+    volumes:
+      - ./ships_log:/app/ships_log  # Persist logs
+    restart: unless-stopped
+    networks:
+      - mdt-network
+
+networks:
+  mdt-network:
+    driver: bridge

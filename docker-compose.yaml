@@ -1,5 +1,3 @@
-
-<<<<<<< HEAD
 services:
   frontend:
     build:
@@ -68,9 +66,19 @@ services:
       timeout: 10s
       retries: 3
 
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ship-websocket-server
+    ports:
+      - "4000-4050:4000-4050"
+    volumes:
+      - ./ships_log:/app/ships_log  # Persist logs
+    restart: unless-stopped
+    networks:
+      - testmdt-network
+
 networks:
   testmdt-network:
     driver: bridge
-
-=======
->>>>>>> 17f451a5b1c641ca94c2272fee78843ca5bdb3ac
