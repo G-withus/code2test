@@ -233,27 +233,41 @@ const [videoView, setVideoView] = useState(false);
   const timeoutRef = useRef(null);
   const [heading, setHeading] = useState(123.4);
   const [gpsId, setGpsId] = useState("10000000e123456be");
+  const [allShips, setAllShips] = useState([]); // ✅ Store all ships
+  const [selectedDeviceId, setSelectedDeviceId] = useState(null);
+  const [selectedGpsShip, setSelectedGpsShip] = useState(null);
 
-  const [topGpsData, setTopGpsData] = useState({
-    Latitude: 16.816586,
-    Longitude: 96.192868,
-    Altitude: 0,
-    Speed: 0,
-    Satellites: 0,
-  });
+  console.log(selectedGpsShip);
 
-  const [bottomGpsData, setBottomGpsData] = useState({
-    Latitude: 0,
-    Longitude: 0,
-    Altitude: 0,
-    Speed: 0,
-    Satellites: 0,
-  });
+  useEffect(() => {
+    if (!selectedDeviceId) return;
+  
+    const matchedShip = allShips.find(ship => ship.device_id === selectedDeviceId);
+    if (matchedShip) {
+      setSelectedGpsShip(matchedShip);
+    }
+  }, [allShips, selectedDeviceId]);
+
+  console.log("Selected GPS Ship:", selectedGpsShip);
+  
+
+  const topGpsData =
+  selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
+    ? selectedGpsShip.gps_data.find(item => item.gps === "top_gps")
+    : null;
+
+  console.log(topGpsData)
+
+    const bottomGpsData =
+    selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
+      ? selectedGpsShip.gps_data.find(item => item.gps === "bottom_gps")
+      : null;
+  console.log(bottomGpsData)
 
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://13.209.33.15:4001";
+      const wsUrl = "ws://13.209.33.15:4002";
       ws_Gps.current = new WebSocket(wsUrl);
   
       ws_Gps.current.onopen = () => {
@@ -272,40 +286,24 @@ const [videoView, setVideoView] = useState(false);
           console.log(message);
   
           if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
-            const ship = message.ships[0];
-            console.log(ship);
+            setAllShips(prevShips => {
+              return message.ships.map(newShip => {
+                const existingShip = prevShips.find(s => s.device_id === newShip.device_id);
   
-            if(ship.heading !== null) setHeading(ship.heading);
-            setGpsId(ship.device_id);
-  
-            if (Array.isArray(ship.gps_data)) {
-              ship.gps_data.forEach((gps) => {
-                const gpsInfo = {
-                  Latitude: gps.latitude,
-                  Longitude: gps.longitude,
-                  Altitude: gps.altitude,
-                  Speed: gps.speed,
-                  Satellites: gps.satellites,
-                };
-  
-                if (gps.gps === "top_gps") {
-                  setTopGpsData(gpsInfo);
-                } else if (gps.gps === "bottom_gps") {
-                  setBottomGpsData(gpsInfo);
+                if (existingShip) {
+                  return {
+                    ...newShip,
+                    heading: newShip.heading !== null ? newShip.heading : existingShip.heading,
+                  };
+                } else {
+                  return newShip;
                 }
               });
-            }
+            });
           }
-  
         } catch (err) {
           console.error("Error parsing WebSocket data:", err);
         }
-  
-        timeoutRef.current = setTimeout(() => {
-          console.log("No GPS update in 5s, clearing...");
-          setTopGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
-          setBottomGpsData((prev) => ({ ...prev, Latitude: 0, Longitude: 0 }));
-        }, 5000);
       };
   
       ws_Gps.current.onerror = (error) => {
@@ -320,17 +318,18 @@ const [videoView, setVideoView] = useState(false);
       };
     };
   
-    // 👉 Call the connection function AFTER definition
+    // Call connectWebSocket once here to initiate connection
     connectWebSocket();
   
-    // ✅ Cleanup on unmount
     return () => {
       if (ws_Gps.current) ws_Gps.current.close();
       if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
       clearTimeout(timeoutRef.current);
     };
-  }, []);
-  
+  }, []);  
+
+  console.log(allShips);
+
 
 
   const droneDataStatic = [
@@ -362,6 +361,12 @@ const [videoView, setVideoView] = useState(false);
     setSelectedDrone(clickedDrone);
   };
 
+  const setShipByDeviceId = (deviceID) => {
+    const shipList = allShips;
+    const clickedship = shipList.find(ship => ship.device_id === deviceID) || null;
+    setSelectedGpsShip(clickedship);
+  };
+
 
   return (
     <div className="w-full relative flex flex-col min-h-screen">
@@ -373,7 +378,7 @@ const [videoView, setVideoView] = useState(false);
     {/* GPS details */}
     {gpsDetails && (
       <>
-        <div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
+        {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">GPS details</span>
             <div className="flex justify-center items-center gap-2">
@@ -387,8 +392,8 @@ const [videoView, setVideoView] = useState(false);
           </div>
 
           <div className="w-full flex justify-between items-center pb-1 pl-1 mt-2 text-[9.5px] font-bold">
-            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{gpsId}</span></div>
-            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{heading}°</span></div>
+            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{selectedGpsShip.device_id}</span></div>
+            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{selectedGpsShip.heading}°</span></div>
             <div></div>
           </div>
 
@@ -398,12 +403,17 @@ const [videoView, setVideoView] = useState(false);
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
             <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
-              {Object.entries(topGpsData).map(([key, value]) => (
-                <div className="w-1/2 flex flex-col mb-1" key={key}>
-                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold text-red-500">{value}</div>
-                </div>
-              ))}
+            {selectedGpsShip &&
+                Object.entries(selectedGpsShip.gps_data[0]).map(([key, value]) => (
+                  <div className="w-1/2 flex flex-col mb-1" key={key}>
+                    <div className="w-full flex items-center text-[12px] text-gray-500">
+                      {key}
+                    </div>
+                    <div className="w-full flex items-center font-semibold text-red-500">
+                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -415,15 +425,20 @@ const [videoView, setVideoView] = useState(false);
             </div>
 
             <div className="w-full flex flex-wrap mt-1 border-b-0.5 text-[14px]">
-              {Object.entries(bottomGpsData).map(([key, value]) => (
-                <div className="w-1/2 flex flex-col mb-1" key={key}>
-                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
-                  <div className="w-full flex items-center font-semibold text-primary">{value}</div>
-                </div>
-              ))}
+            {selectedGpsShip &&
+                Object.entries(selectedGpsShip.gps_data[1]).map(([key, value]) => (
+                  <div className="w-1/2 flex flex-col mb-1" key={key}>
+                    <div className="w-full flex items-center text-[12px] text-gray-500">
+                      {key}
+                    </div>
+                    <div className="w-full flex items-center font-semibold text-red-500">
+                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
+                    </div>
+                  </div>
+                ))}
             </div>
         </div>
-        </div>
+        </div>)}
       </>)}
 
 
@@ -492,18 +507,19 @@ const [videoView, setVideoView] = useState(false);
               />
               </>
               ))}
-              <Marker
-                  key={topGpsData.Satellites}
-                  position={[topGpsData.Latitude, topGpsData.Longitude]}
-                  icon={carIcon(heading)}
+              {allShips.length > 0 && allShips.map((ship, index) =>  (<Marker
+                  key={index}
+                  position={[ship.gps_data[0].latitude, ship.gps_data[0].longitude]}
+                  icon={ship.heading !== null ? carIcon(ship.heading) : undefined}
                   eventHandlers={{ click: () => {setGpsDetails(true);
+                    setSelectedDeviceId(ship.device_id)
                   },
                   }}
                 >
                   <Popup>
-                    <strong>Heading: </strong>{heading}<br />
+                    <strong>Heading: </strong>{ship.heading}<br />
                   </Popup>
-                </Marker>
+                </Marker>))}
             </MapContainer>
       </div>
 
