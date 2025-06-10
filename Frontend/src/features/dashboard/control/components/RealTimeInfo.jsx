@@ -265,7 +265,6 @@ const RealTimeInfo = () => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
       const wsUrl = "ws://13.209.33.15:4002";
-      const wsUrl = "ws://13.209.33.15:4002";
       ws_Gps.current = new WebSocket(wsUrl);
   
       ws_Gps.current.onopen = () => {
@@ -301,7 +300,6 @@ const RealTimeInfo = () => {
                 }
               });
             });
-            });
           }
         } catch (err) {
           console.error("Error parsing WebSocket data:", err);
@@ -320,8 +318,6 @@ const RealTimeInfo = () => {
       };
     };
   
-    // Call connectWebSocket once here to initiate connection
-    // Call connectWebSocket once here to initiate connection
     connectWebSocket();
   
     return () => {
@@ -486,7 +482,6 @@ const RealTimeInfo = () => {
     {gpsDetails && (
       <>
         {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
-        {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">GPS details</span>
             <div className="flex justify-center items-center gap-2">
@@ -502,8 +497,6 @@ const RealTimeInfo = () => {
           <div className="w-full flex justify-between items-center pb-1 pl-1 mt-2 text-[9.5px] font-bold">
             <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{selectedGpsShip.device_id}</span></div>
             <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{selectedGpsShip.heading}°</span></div>
-            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{selectedGpsShip.device_id}</span></div>
-            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{selectedGpsShip.heading}°</span></div>
             <div></div>
           </div>
 
@@ -513,17 +506,6 @@ const RealTimeInfo = () => {
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
             <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
-            {selectedGpsShip &&
-                Object.entries(selectedGpsShip.gps_data[0]).map(([key, value]) => (
-                  <div className="w-1/2 flex flex-col mb-1" key={key}>
-                    <div className="w-full flex items-center text-[12px] text-gray-500">
-                      {key}
-                    </div>
-                    <div className="w-full flex items-center font-semibold text-red-500">
-                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
-                    </div>
-                  </div>
-                ))}
             {selectedGpsShip &&
                 Object.entries(selectedGpsShip.gps_data[0]).map(([key, value]) => (
                   <div className="w-1/2 flex flex-col mb-1" key={key}>
@@ -557,20 +539,8 @@ const RealTimeInfo = () => {
                     </div>
                   </div>
                 ))}
-            {selectedGpsShip &&
-                Object.entries(selectedGpsShip.gps_data[1]).map(([key, value]) => (
-                  <div className="w-1/2 flex flex-col mb-1" key={key}>
-                    <div className="w-full flex items-center text-[12px] text-gray-500">
-                      {key}
-                    </div>
-                    <div className="w-full flex items-center font-semibold text-red-500">
-                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
-                    </div>
-                  </div>
-                ))}
             </div>
         </div>
-        </div>)}
         </div>)}
       </>)}
 
