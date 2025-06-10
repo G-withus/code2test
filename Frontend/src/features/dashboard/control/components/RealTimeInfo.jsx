@@ -209,9 +209,8 @@ const RealTimeInfo = () => {
     };
   }, []);
   
-
   
-const [videoView, setVideoView] = useState(false);
+  const [videoView, setVideoView] = useState(false);
   const [wayPointsVisible, setWayPointsVisible] = useState(true);
   const [gpsDetails, setGpsDetails] = useState(false);
 
@@ -231,8 +230,6 @@ const [videoView, setVideoView] = useState(false);
   const ws_Gps = useRef(null);
   const reconnectGpsInterval = useRef(null);
   const timeoutRef = useRef(null);
-  const [heading, setHeading] = useState(123.4);
-  const [gpsId, setGpsId] = useState("10000000e123456be");
   const [allShips, setAllShips] = useState([]); // ✅ Store all ships
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [selectedGpsShip, setSelectedGpsShip] = useState(null);
@@ -268,6 +265,7 @@ const [videoView, setVideoView] = useState(false);
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
       const wsUrl = "ws://13.209.33.15:4002";
+      const wsUrl = "ws://13.209.33.15:4002";
       ws_Gps.current = new WebSocket(wsUrl);
   
       ws_Gps.current.onopen = () => {
@@ -286,6 +284,9 @@ const [videoView, setVideoView] = useState(false);
           console.log(message);
   
           if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
+            message.ships.forEach(ship => {
+              updateShipTargets(ship);
+            });
             setAllShips(prevShips => {
               return message.ships.map(newShip => {
                 const existingShip = prevShips.find(s => s.device_id === newShip.device_id);
@@ -299,6 +300,7 @@ const [videoView, setVideoView] = useState(false);
                   return newShip;
                 }
               });
+            });
             });
           }
         } catch (err) {
@@ -319,6 +321,7 @@ const [videoView, setVideoView] = useState(false);
     };
   
     // Call connectWebSocket once here to initiate connection
+    // Call connectWebSocket once here to initiate connection
     connectWebSocket();
   
     return () => {
@@ -330,7 +333,123 @@ const [videoView, setVideoView] = useState(false);
 
   console.log(allShips);
 
+  const handleSelectedDrone = (systemID) => {
+    const droneList = Object.values(drones); // convert to array
+    const clickedDrone = droneList.find(drone => drone.system_id === systemID) || null;
+    setSelectedDrone(clickedDrone);
+  };
 
+  const setShipByDeviceId = (deviceID) => {
+    const shipList = allShips;
+    const clickedship = shipList.find(ship => ship.device_id === deviceID) || null;
+    setSelectedGpsShip(clickedship);
+  };
+
+  const [smoothPositions, setSmoothPositions] = useState({});
+  const [smoothHeadings, setSmoothHeadings] = useState({});
+  const animationFrameRefs = useRef({});
+  const animationStartTimes = useRef({});
+  const animationDuration = 1000; // 1 second animation duration
+  // Get current smooth position or fallback to raw
+  const getSmoothPosition = (ship) => {
+    const id = ship.device_id;
+    return smoothPositions[id]?.smooth ?? [ship.gps_data?.[0]?.latitude ?? 0, ship.gps_data?.[0]?.longitude ?? 0];
+  };
+  // Get current smooth heading or fallback to raw
+  const getSmoothHeading = (ship) => {
+    const id = ship.device_id;
+    return smoothHeadings[id]?.smooth ?? ship.heading ?? 0;
+  };
+  // Animate one ship per frame
+  const animateShip = (id, now) => {
+    if (!animationStartTimes.current[id]) animationStartTimes.current[id] = now;
+    const elapsed = now - animationStartTimes.current[id];
+    const t = Math.min(elapsed / animationDuration, 1); // clamp 0..1
+    const pos = smoothPositions[id];
+    if (!pos) return;
+    // Interpolate lat/lon
+    const lat = pos.prev[0] + (pos.target[0] - pos.prev[0]) * t;
+    const lon = pos.prev[1] + (pos.target[1] - pos.prev[1]) * t;
+    const head = smoothHeadings[id];
+    if (!head) return;
+    // Interpolate heading with angle wrapping
+    const angleDiff = ((((head.target - head.prev) % 360) + 540) % 360) - 180;
+    const interpHeading = head.prev + angleDiff * t;
+    // Update smooth states
+    setSmoothPositions(prev => ({
+      ...prev,
+      [id]: { ...prev[id], smooth: [lat, lon] }
+    }));
+    setSmoothHeadings(prev => ({
+      ...prev,
+      [id]: { ...prev[id], smooth: interpHeading }
+    }));
+    // Continue animation if not done
+    if (t < 1) {
+      animationFrameRefs.current[id] = requestAnimationFrame((timestamp) => animateShip(id, timestamp));
+    }
+  };
+  // Called when new data arrives to start animation for each ship
+  const updateShipTargets = (ship) => {
+    const id = ship.device_id;
+    const newPos = [ship.gps_data?.[0]?.latitude ?? 0, ship.gps_data?.[0]?.longitude ?? 0];
+    const newHeading = ship.heading ?? 0;
+    setSmoothPositions(prev => ({
+      ...prev,
+      [id]: {
+        prev: prev[id]?.smooth ?? newPos,
+        target: newPos,
+        smooth: prev[id]?.smooth ?? newPos,
+      }
+    }));
+    setSmoothHeadings(prev => ({
+      ...prev,
+      [id]: {
+        prev: prev[id]?.smooth ?? newHeading,
+        target: newHeading,
+        smooth: prev[id]?.smooth ?? newHeading,
+      }
+    }));
+    // Reset animation start time and cancel previous animation if any
+    animationStartTimes.current[id] = performance.now();
+    if (animationFrameRefs.current[id]) {
+      cancelAnimationFrame(animationFrameRefs.current[id]);
+    }
+    animationFrameRefs.current[id] = requestAnimationFrame((timestamp) => animateShip(id, timestamp));
+  };
+  // Hook to update all ships when new data arrives (e.g. when allShips updates)
+  useEffect(() => {
+    if(allShips.length>0) allShips.forEach(ship => {
+      updateShipTargets(ship);
+    });
+  }, [allShips]);  
+
+  function SmoothMarker({ ship, carIcon, onClick, onMouseOver }) {
+    const markerRef = useRef(null);
+    useEffect(() => {
+      if (markerRef.current) {
+        const leafletMarker = markerRef.current;
+        const pos = getSmoothPosition(ship); // your function returning smooth [lat, lon]
+        const heading = getSmoothHeading(ship); // your function returning smooth heading
+        leafletMarker.setLatLng(pos); // update position without re-render
+        if (heading != null) {
+          leafletMarker.setIcon(carIcon(heading)); // update icon without re-render
+        }
+      }
+    }, [ship]); // run whenever smooth position or heading changes
+    return (
+      <Marker
+        ref={markerRef}
+        position={getSmoothPosition(ship)} // initial position
+        icon={carIcon(getSmoothHeading(ship))}
+        eventHandlers={{ click: onClick, mouseover: onMouseOver }}
+      >
+        <Popup>
+          <strong>Heading:</strong> {ship.heading}
+        </Popup>
+      </Marker>
+    );
+  }
 
   const droneDataStatic = [
     {
@@ -355,18 +474,6 @@ const [videoView, setVideoView] = useState(false);
 
   // console.log(altt)
 
-  const handleSelectedDrone = (systemID) => {
-    const droneList = Object.values(drones); // convert to array
-    const clickedDrone = droneList.find(drone => drone.system_id === systemID) || null;
-    setSelectedDrone(clickedDrone);
-  };
-
-  const setShipByDeviceId = (deviceID) => {
-    const shipList = allShips;
-    const clickedship = shipList.find(ship => ship.device_id === deviceID) || null;
-    setSelectedGpsShip(clickedship);
-  };
-
 
   return (
     <div className="w-full relative flex flex-col min-h-screen">
@@ -378,6 +485,7 @@ const [videoView, setVideoView] = useState(false);
     {/* GPS details */}
     {gpsDetails && (
       <>
+        {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
         {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">GPS details</span>
@@ -394,6 +502,8 @@ const [videoView, setVideoView] = useState(false);
           <div className="w-full flex justify-between items-center pb-1 pl-1 mt-2 text-[9.5px] font-bold">
             <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{selectedGpsShip.device_id}</span></div>
             <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{selectedGpsShip.heading}°</span></div>
+            <div className="w-7/12 bg-primary text-white rounded-md p-1 items-center flex justify-between">DeviceID:<span className="ml-1 text-[9px] p-1 bg-white text-primary rounded-sm">{selectedGpsShip.device_id}</span></div>
+            <div className="w-4/12 bg-red-500 text-white rounded-md p-1 items-center flex justify-between">Heading: <span className=" text-[9px] p-1 bg-white text-red-500 rounded-sm">{selectedGpsShip.heading}°</span></div>
             <div></div>
           </div>
 
@@ -403,6 +513,17 @@ const [videoView, setVideoView] = useState(false);
               <IoInformationCircle size={"20px"} className="text-gray-400" />
             </div>
             <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]">
+            {selectedGpsShip &&
+                Object.entries(selectedGpsShip.gps_data[0]).map(([key, value]) => (
+                  <div className="w-1/2 flex flex-col mb-1" key={key}>
+                    <div className="w-full flex items-center text-[12px] text-gray-500">
+                      {key}
+                    </div>
+                    <div className="w-full flex items-center font-semibold text-red-500">
+                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
+                    </div>
+                  </div>
+                ))}
             {selectedGpsShip &&
                 Object.entries(selectedGpsShip.gps_data[0]).map(([key, value]) => (
                   <div className="w-1/2 flex flex-col mb-1" key={key}>
@@ -436,8 +557,20 @@ const [videoView, setVideoView] = useState(false);
                     </div>
                   </div>
                 ))}
+            {selectedGpsShip &&
+                Object.entries(selectedGpsShip.gps_data[1]).map(([key, value]) => (
+                  <div className="w-1/2 flex flex-col mb-1" key={key}>
+                    <div className="w-full flex items-center text-[12px] text-gray-500">
+                      {key}
+                    </div>
+                    <div className="w-full flex items-center font-semibold text-red-500">
+                      {Array.isArray(value) ? value.join(", ") : value?.toString()}
+                    </div>
+                  </div>
+                ))}
             </div>
         </div>
+        </div>)}
         </div>)}
       </>)}
 
@@ -507,19 +640,20 @@ const [videoView, setVideoView] = useState(false);
               />
               </>
               ))}
-              {allShips.length > 0 && allShips.map((ship, index) =>  (<Marker
-                  key={index}
-                  position={[ship.gps_data[0].latitude, ship.gps_data[0].longitude]}
-                  icon={ship.heading !== null ? carIcon(ship.heading) : undefined}
-                  eventHandlers={{ click: () => {setGpsDetails(true);
-                    setSelectedDeviceId(ship.device_id)
-                  },
+              {allShips.length > 0 && allShips.map((ship, index) =>  (
+                  <SmoothMarker
+                  key={ship.device_id}
+                  ship={ship}
+                  carIcon={carIcon}
+                  onClick={() => {
+                    setGpsDetails(true);
+                    setSelectedDeviceId(ship.device_id);
                   }}
-                >
-                  <Popup>
-                    <strong>Heading: </strong>{ship.heading}<br />
-                  </Popup>
-                </Marker>))}
+                  onMouseOver={() => {setSelectedDeviceId(ship.device_id);
+                    setGpsDetails(true);
+                  }}
+                />
+                ))}
             </MapContainer>
       </div>
 
