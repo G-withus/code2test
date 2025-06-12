@@ -211,7 +211,7 @@ const RealTimeInfo = () => {
   
   
   const [videoView, setVideoView] = useState(false);
-  const [wayPointsVisible, setWayPointsVisible] = useState(true);
+    const [shipDetails, setShipDetails] = useState(false);
   const [gpsDetails, setGpsDetails] = useState(false);
 
   const searchRef = useRef(null);
@@ -235,6 +235,17 @@ const RealTimeInfo = () => {
   const [selectedGpsShip, setSelectedGpsShip] = useState(null);
 
   console.log(selectedGpsShip);
+
+    const droneRealTimeData = [
+    {
+      Latitude: lat,
+      Longitude: lon,
+      "Altitude": altt+" M",
+      "Airspeed(m/s)": airSpeed,
+      "Groundspeed(m/s)": groundSpeed,
+      "Battery(V)": battery,
+    }
+  ];
 
   useEffect(() => {
     if (!selectedDeviceId) return;
@@ -463,46 +474,60 @@ const RealTimeInfo = () => {
     );
   }
 
-  const droneDataStatic = [
-    {
-      "Model": systemID != null ? `VT${String(systemID).padStart(3, '0')}/${systemID}` : "VT000",
-      "Serial No": "MDT290I24060801",
-      Latitude: lat,
-      Longitude: lon,
-      Altitude: altt+" M",
-    }
-  ];
-
-  const droneRealTimeData = [
-    {
-      Latitude: lat,
-      Longitude: lon,
-      "Altitude": altt+" M",
-      "Airspeed(m/s)": airSpeed,
-      "Groundspeed(m/s)": groundSpeed,
-      "Battery(V)": battery,
-    }
-  ];
-
-  // console.log(altt)
-
-
   return (
     <div className="w-full relative flex flex-col min-h-screen">
       <div className="absolute top-0 left-0 w-full bg-transparent z-40 flex flex-col gap-2 p-3">
         <TopBar />
       </div>
 
+      {shipDetails && (
+        <div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-30 flex flex-col rounded-md shadow-md">
+          <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
+            <span className="font-semibold">Drone</span>
+            <div className="flex justify-center items-center gap-2">
+              <img src="video_icon.png" className="text-primary cursor-pointer object-contain size-5" onClick={() => setVideoView(true)}/>
+              <RxCross2 size={"20px"} onClick={() => setShipDetails(!shipDetails)  
+              } className="text-primary cursor-pointer" />
+            </div>
+            
+          </div>
+
+          <div className="w-full object-contain">
+            <img src="droneImg.png" alt="Drone Image" className="w-full h-36" />
+          </div>
+
+
+          <div className="w-full flex pb-1 pl-3 flex-col">
+            <div className="w-full flex items-end justify-start gap-1">
+              <div className="flex justify-center items-center text-[16px] text-center font-semibold">Drone Info</div>
+              <IoInformationCircle size={"20px"} className="text-gray-400" />
+            </div>
+
+          {droneRealTimeData.map((drone, index) => (
+            <div className="w-full flex flex-wrap mt-2 border-b-0.5 text-[14px]" key={index}>
+              {Object.entries(drone).map(([key, value]) => (
+                <div className="w-1/2 flex flex-col mb-2" key={key}>
+                  <div className="w-full flex items-center text-[12px] text-gray-500">{key}</div>
+                  <div className="w-full flex items-center font-semibold text-primary">{value}</div>
+                </div>
+              ))}
+            </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
     {/* GPS details */}
     {gpsDetails && (
       <>
+
         {selectedGpsShip !== null && (<div className="absolute top-[60px] left-7 xl:w-[300px] lg:w-3/12 h-6/6 bg-white z-40 flex flex-col rounded-md shadow-md">
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">GPS details</span>
             <div className="flex justify-center items-center gap-2">
               <RxCross2 size={"20px"} onClick={() => {setGpsDetails(!gpsDetails);
-                setSelectedDeviceId(null);
+                setSelectedDeviceId(null); setShipDetails(false); setSelectedGpsShip(null);
               }} className="text-primary cursor-pointer" />
             </div>
             
@@ -600,10 +625,10 @@ const RealTimeInfo = () => {
                   key={index}
                   position={[drone.lat, drone.lon]}
                   icon={droneIcon(drone.yaw)}
-                  eventHandlers={{ click: () => {setVideoView(true);
-                                                 setGpsDetails(false);
+                  eventHandlers={{ click: () => {setShipDetails(true);
                   },
-                  mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id);},
+                  mouseover: () => {setSystemID(drone.system_id); handleSelectedDrone(drone.system_id); setGpsDetails(false)
+                                                 setShipDetails(true); setSelectedDeviceId(null);},
                   }}
                 >
                 <HeadingLine position={[drone.lat, drone.lon]} heading={drone.heading} />
@@ -619,13 +644,13 @@ const RealTimeInfo = () => {
                   </Popup>
                 </Marker>
                 <Polyline
-                key={drone.GCS_IP}
-                positions={drone.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon])}
-                color="red"
-                opacity={0.5}
-                weight={2}
-                dashArray="5, 10"
-              />
+                  key={drone.GCS_IP}
+                  positions={drone.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon])}
+                  color="black"
+                  opacity={0.5}
+                  weight={2}
+                  dashArray="5, 10"
+                />
               </>
               ))}
               {allShips.length > 0 && allShips.map((ship, index) =>  (

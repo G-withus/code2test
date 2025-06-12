@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { RxCross2 } from "react-icons/rx";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 // import * as turf from "@turf/turf";
@@ -10,9 +10,6 @@ import L from "leaflet";
 // eslint-disable-next-line react/prop-types
 const VideoViewer = ({setVideoView, systemID}) => {
    
-    const ships = [
-        { id: "ship1", position: [35.062067, 129.1024905] },
-    ];
 
     function HeadingLine({ position, heading }) {
       const length = 0.065; // You can tune this for visual size
@@ -44,11 +41,24 @@ const VideoViewer = ({setVideoView, systemID}) => {
       weight={1.7} />;
     }
 
+    function FollowDrone({ lat, lon }) {
+      const map = useMap();
+    
+      useEffect(() => {
+        if (smoothPosition) {
+          map.setView(smoothPosition, map.getZoom()); // keep zoom level
+        }
+      }, [smoothPosition, map]);
+    
+      return null;
+    }
+
     // State for each video's zoom and position
     const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
     const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
    
-    const remoteVideoRef = useRef(null);
+        const remoteVideoRef = useRef(null);
+    const remoteVideoRef2 = useRef(null);
     const [status, setStatus] = useState('Initializing...');
     const [error, setError] = useState('');
     const janusRef = useRef(null);
@@ -65,9 +75,29 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const [drones, setDrones] = useState({});
     const [lat, setLat] = useState("");
     const [lon, setLon] = useState("");
-    const [shipPosition, setShipPosition] = useState({});
+    const [shipPosition, setShipPosition] = useState(null);
     const reconnectInterval = useRef(null);
     const [wayPointsVisible, setWayPointsVisible] = useState(false);
+    const [detectedCount, setDetectedCount] = useState(0);
+    const [prevPosition, setPrevPosition] = useState([0,0]);
+    const [targetPosition, setTargetPosition] = useState([0,0]);
+    const [smoothPosition, setSmoothPosition] = useState([0,0]);
+
+    const [prevHeading, setPrevHeading] = useState(0);
+    const [targetHeading, setTargetHeading] = useState(0);
+    const [smoothHeading, setSmoothHeading] = useState(0);
+
+    const [prevPrevHeading, setPrevPrevHeading] = useState(0);
+    const [prevTargetHeading, setPrevTargetHeading] = useState(0);
+    const [prevSmoothHeading, setPrevSmoothHeading] = useState(0);
+
+    const [targetSmoothHeading, setTargetSmoothHeading] = useState(0);
+    const [targetPreviousHeading, setTargetPreviousHeading] = useState(0);
+    const [targetTargetHeading, setTargetTargetHeading] = useState(0);
+
+
+    const duration = 1000; // match your WebSocket update interval
+    const startTimeRef = useRef(null);
     // const t = useTranslations();
     // console.log(systemID);
     // console.log(drones)
@@ -76,13 +106,12 @@ const VideoViewer = ({setVideoView, systemID}) => {
         {
           "Drone_ID": `VT${String(drones.system_id).padStart(3, '0')} / ${drones.system_id}`,
           "Vessel ID": "??",
-          "lat": drones.lat + "° " + (drones.lat >= 0 ? "N" : "S"),
-          "Ion": drones.lon + "° " + (drones.lon >= 0 ? "E" : "W"),
+          "Latitude": drones.lat != null ? (drones.lat).toFixed(4) + "° " + (drones.lat >= 0 ? "N" : "S"): null,
+          "Longitude": drones.lon != null ? (drones.lon).toFixed(4)  + "° " + (drones.lon >= 0 ? "E" : "W"): null,
           "alt": drones.alt,
           "dist_traveled(m)": drones.dist_traveled != null ? `${Math.floor(drones.dist_traveled)} m` : null,
           "wp_dist(m)": drones.wp_dist,
           "dist_to_home(m)": drones.dist_to_home != null ? drones.dist_to_home.toString().replace('.', '').slice(0, 4): null,
-          "null": null,
           "wind_vel(m/s)": drones.wind_vel != null ? drones.wind_vel.toFixed(2) : null,
           "airspeed(m/s)": drones.airspeed != null ? drones.airspeed.toFixed(2) : null,
           "groundspeed(m/s)": drones.ground_speed != null ? drones.ground_speed.toFixed(2) : null,
@@ -92,9 +121,9 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "toh": drones.toh,
           "tot": drones.tot,
           "time_in_air(s)": drones.time_in_air,
-          "time_in_air_min_sec": drones.time_in_air != null ? `${String(Math.floor(drones.time_in_air / 60)).padStart(2, '0')} min ${String(drones.time_in_air % 60).padStart(2, '0')}s` : null,
+          "time_in_air_min_sec": drones.time_in_air != null ? `${String(Math.floor(drones.time_in_air / 3600)).padStart(2, '0')}h ` + `${String(Math.floor((drones.time_in_air % 3600) / 60)).padStart(2, '0')}m ` + `${String(drones.time_in_air % 60).padStart(2, '0')}s`: null,
           "gps_hdop": drones.gps_hdop,
-          "battery_voltage(V)": drones.battery_voltage != null ? ((drones.battery_voltage)/100).toFixed(3) : null,
+          "battery_voltage(V)": drones.battery_voltage != null ? ((drones.battery_voltage)/1000).toFixed(2) : null,
           "battery_current(A)": drones.battery_current != null ? ((drones.battery_current)/100).toFixed(2) : null,
           "ch3percent": drones.ch3percent+"%",
           "ch3out": drones.ch3out,
@@ -102,7 +131,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
           "ch10out": drones.ch10out,
           "ch11out": drones.ch11out,
           "ch12out": drones.ch12out,
-          "blank": null,
+          "Flight_Time" : drones.auto_time != null ? `${String(Math.floor(drones.auto_time / 3600)).padStart(2, '0')}h ` + `${String(Math.floor((drones.auto_time % 3600) / 60)).padStart(2, '0')}m ` + `${String(drones.auto_time % 60).padStart(2, '0')}s`: null,
         }
       ];
       // Janus WebRTC Stream
@@ -247,29 +276,21 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 const selectedDrone = data.drones.find((drone) => drone.system_id === systemID) || null;
 
                 setDrones(selectedDrone);
-                // setShipPosition(selectedDrone.home_location || {});; 
-                // let updatedLat = null;
-                // let updatedLon = null;
-                // updatedLat = `${Math.abs(selectedDrone.lat)}° ${selectedDrone.lat >= 0 ? "N" : "S"}`;
-                //   updatedLon = `${Math.abs(selectedDrone.lon)}° ${selectedDrone.lat >= 0 ? "E" : "W"}`;;
-                //   setShipPosition([...shipPosition, selectedDrone.home_location]);
-                
-                // setLat(updatedLat);
-                // setLon(updatedLon);
+                if (selectedDrone) {
+                  setDrones(selectedDrone);
 
-                // let updatedDrones = {};
-                // let updatedLat = null;
-                // let updatedLon = null;
-                // const updatedShipPosition = [];
-                // data.drones.forEach((drone) => {
-                //   drone.waypoints = Array.isArray(drone.waypoints) ? drone.waypoints : [];
-                //   updatedDrones[drone.GCS_IP] = drone;
-                //   updatedDrones = Object.values(drones).filter((drone) => drone.systemid === systemID)
-                
-    
-                // setShipPosition(updatedShipPosition);
-                // console.log(updatedDrones);
-                // console.log(updatedShipPosition);
+                  // Only store first lat/lon once
+                  setShipPosition((prev) => {
+                    if (prev === null) {
+                      return {
+                        lat: selectedDrone.lat,
+                        lon: selectedDrone.lon,
+                        system_id: selectedDrone.system_id,
+                      };
+                    }
+                    return prev; // Already stored
+                  });
+                }
               } else {
                 console.warn("Invalid WebSocket data:", data);
               }
@@ -297,6 +318,61 @@ const VideoViewer = ({setVideoView, systemID}) => {
           if (reconnectInterval.current) clearInterval(reconnectInterval.current);
         };
       }, []);
+
+        useEffect(() => {
+    let animationFrame;
+  
+    const animate = (now) => {
+      if (!startTimeRef.current) startTimeRef.current = now;
+      const elapsed = now - startTimeRef.current;
+      const t = Math.min(elapsed / duration, 1); // clamp to [0, 1]
+  
+      // Linear interpolation for position
+      const lat = prevPosition[0] + (targetPosition[0] - prevPosition[0]) * t;
+      const lon = prevPosition[1] + (targetPosition[1] - prevPosition[1]) * t;
+      setSmoothPosition([lat, lon]);
+  
+      // Linear interpolation for heading
+      const angleDiff = ((((targetHeading - prevHeading) % 360) + 540) % 360) - 180;
+      const anglePrev = ((((prevTargetHeading - prevPrevHeading) % 360) + 540) % 360) - 180;
+      const angleTarget = ((((targetTargetHeading - targetPreviousHeading) % 360) + 540) % 360) - 180;
+      const interpolatedHeading = prevHeading + angleDiff * t;
+      const interpolatedPrevHeading = prevPrevHeading + anglePrev * t;
+      const interpolatedTargetHeading = targetPreviousHeading + angleTarget * t;
+      setSmoothHeading(interpolatedHeading);
+      setPrevSmoothHeading(interpolatedPrevHeading);
+      setTargetSmoothHeading(interpolatedTargetHeading);
+  
+      if (t < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+  
+    animationFrame = requestAnimationFrame(animate);
+  
+    return () => cancelAnimationFrame(animationFrame);
+  }, [prevPosition, targetPosition, prevHeading, targetHeading, prevPrevHeading, prevTargetHeading, targetPreviousHeading, targetTargetHeading]);
+
+  useEffect(() => {
+      setPrevPosition(smoothPosition);
+      setPrevHeading(smoothHeading);
+      setPrevPrevHeading(prevSmoothHeading);
+      setTargetPreviousHeading(targetSmoothHeading);
+
+      if (drones.lat != null && drones.lon != null) {
+        setTargetPosition([drones.lat, drones.lon]);
+      }
+      if (drones.heading != null && drones.previous_heading != null && drones.target_heading != null) {
+        setTargetHeading(drones.heading);
+        setPrevTargetHeading(drones.previous_heading / 100);
+        setTargetTargetHeading(drones.target_heading);
+      }
+    
+      startTimeRef.current = performance.now();
+    }, [drones.lat, drones.lon, drones.heading]);
+  
+      
+
       // Custom Drone Icon
       const droneIcon = (rotation) =>
         new L.DivIcon({
@@ -305,41 +381,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
           iconSize: [25, 25],
           iconAnchor: [12, 12],
         });
-      
-    //   // Custom Ship Icon 
-    //   const shipIcon = new L.Icon({
-    //     iconUrl: "shipIcon.png",
-    //     iconSize: [40, 40],
-    //     iconAnchor: [20, 40],
-    //     popupAnchor: [0, -40],
-    //   });
-
-    const shipIcons = [
-          "vessel(Navy).png",
-          "vessel(blue).png",
-          "vessel(green).png",
-          "vessel(lightYellow).png",
-          "vessel(olive).png",
-          "vessel(orange).png",
-          "vessel(pink).png",
-          "vessel(Purple).png",
-          "vessel(red).png",
-          "vessel(Yellow).png",
-        ];
-        
-        const getShipIcon = (index) => {
-          const hash = index;
-          return shipIcons[hash % shipIcons.length];
-        };
-        
-        const shipsWithIcons = useMemo(() => {
-          return Object.entries(shipPosition).map((ship, index) => ({
-            ...ship,
-            icon: getShipIcon(index),
-          }));
-        }, [shipPosition]);
-
-        // console.log(shipsWithIcons)
       
 
     // Handle zoom for each video
@@ -438,7 +479,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             </div>
 
             {/* Video Container */}
-            <div className="w-full flex items-center h-1/2 bg-white">
+            <div className="w-full flex items-center h-2/5 bg-white">
                 {/* Video 1 */}
                 <div
                     className="w-1/2 h-full overflow-hidden flex justify-center items-center"
@@ -484,12 +525,12 @@ const VideoViewer = ({setVideoView, systemID}) => {
             </div>
 
             {/* Telemetric data and map */}
-            <div className="w-full flex items-center h-1/2">
+            <div className="w-full flex items-center h-3/5">
                 
                 {/* Map */}
       {drones && Object.keys(drones).length > 0 && (<MapContainer
             center={[drones.lat, drones.lon]}
-            zoom={9}
+            zoom={18}
             minZoom={2.5}
             maxZoom={18} 
             className="z-0 w-full h-full"
@@ -499,46 +540,27 @@ const VideoViewer = ({setVideoView, systemID}) => {
             maxBoundsViscosity={1.0} 
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" noWrap={true}/>
-              {/* {shipsWithIcons && Object.keys(shipsWithIcons).map((ship, index) => (
-                <Marker
-                  key={index}
-                  position={[ship.lat, ship.lon]}
-                  icon={new L.Icon({
-                    iconUrl: ship.icon,  
-                    iconSize: [20, 20],
-                    iconAnchor: [20, 40],
-                    popupAnchor: [0, -40],
-                  })}
-                />
-              ))} */}
               {drones && Object.keys(drones).length > 0 && (
                 <>
                 <Marker
                   key={drones.system_id}
-                  position={[drones.lat, drones.lon]}
-                  icon={droneIcon(drones.yaw)}
+                  position={smoothPosition}
+                  icon={droneIcon(smoothHeading)}
                 >
-                  
-                  <Popup>
-                    <div>
-                    <strong>Drone id:</strong> VT{String(drones.system_id).padStart(3, '0')} / {drones.system_id} <br />
-                      <strong>Altitude(m):</strong> {drones.alt} m <br />
-                      <strong>Time in air (m.s)</strong> {drones.time_in_air} m.s <br />
-                      <strong>Airspeed (m/s):</strong> {drones.airspeed} m/s <br />
-                      <strong>Groundspeed (m/s):</strong> {drones.ground_speed} m/s <br />
-                      <strong>Battery (V):</strong> {drones.battery_voltage} V
-                    </div>
-                  </Popup>
                 </Marker>
-                <HeadingLine position={[drones.lat, drones.lon]} heading={drones.heading} />
-                <HeadingLineOrange position={[drones.lat, drones.lon]} heading={drones.previous_heading / 100} />
-                <HeadingLineGreen position={[drones.lat, drones.lon]} heading={Math.floor(drones.target_heading)} />
+                <FollowDrone lat={drones.lat} lon={drones.lon} />
+                <HeadingLine position={smoothPosition} heading={smoothHeading} />
+                <HeadingLineOrange position={smoothPosition} heading={prevSmoothHeading} />
+                <HeadingLineGreen position={smoothPosition} heading={targetSmoothHeading} />
+                
                 <Polyline
                   key={drones.GCS_IP}
                   positions={Array.isArray(drones.waypoints) ? drones.waypoints.map((waypoint) => [waypoint.lat, waypoint.lon]) : []}
-                  color="blue"
+                  color="black"
                   opacity={0.5}
                   weight={2}
+                  dashArray="5, 5"
+                  smoothFactor={1}
                 />
               </>
               )}
