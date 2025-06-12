@@ -479,7 +479,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
             </div>
 
             {/* Video Container */}
-            <div className="w-full flex items-center h-2/5 bg-white">
+            <div className="w-full flex items-center dasktop:h-2/5 laptop:h-1/2 bg-white">
                 {/* Video 1 */}
                 <div
                     className="w-1/2 h-full overflow-hidden flex justify-center items-center"
@@ -524,8 +524,8 @@ const VideoViewer = ({setVideoView, systemID}) => {
                
             </div>
 
-            {/* Telemetric data and map */}
-            <div className="w-full flex items-center h-3/5">
+            {/*map */}
+            <div className="w-full flex items-center dasktop:h-3/5 laptop:h-1/2">
                 
                 {/* Map */}
       {drones && Object.keys(drones).length > 0 && (<MapContainer

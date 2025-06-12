@@ -15,7 +15,10 @@ export default {
         pretendard: ["Pretendard", "sans-serif"],
       },
       screens: {
-        xs: { max: "440px" }, // Applies styles when the screen is 440px or less
+        // xs: { max: "440px" },
+        'dasktop': '1802px',
+        'laptop': '1280px', 
+      
       },
       borderWidth: {
         0.5: "0.5px",
