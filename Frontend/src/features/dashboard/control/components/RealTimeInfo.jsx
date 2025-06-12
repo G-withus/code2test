@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Polyline, Popup} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import TopBar from "../../components/TopBar";
@@ -264,7 +264,7 @@ const RealTimeInfo = () => {
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://13.209.33.15:4002";
+      const wsUrl = "ws://localhost:4002";
       ws_Gps.current = new WebSocket(wsUrl);
   
       ws_Gps.current.onopen = () => {
@@ -346,6 +346,22 @@ const RealTimeInfo = () => {
   const animationFrameRefs = useRef({});
   const animationStartTimes = useRef({});
   const animationDuration = 1000; // 1 second animation duration
+
+  function FollowSelectedDevice({ selectedDeviceId, smoothPositions }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedDeviceId) return;
+    const smooth = smoothPositions[selectedDeviceId]?.smooth;
+    if (!smooth) return;
+    const [lat, lon] = smooth;
+    map.setView([lat, lon], map.getZoom(), { animate: true });
+  }, [selectedDeviceId, smoothPositions]);
+
+  return null;
+}
+
+
   // Get current smooth position or fallback to raw
   const getSmoothPosition = (ship) => {
     const id = ship.device_id;
@@ -624,6 +640,10 @@ const RealTimeInfo = () => {
                   }}
                 />
                 ))}
+              <FollowSelectedDevice
+                selectedDeviceId={selectedDeviceId}
+                smoothPositions={smoothPositions}
+              />
             </MapContainer>
       </div>
 
