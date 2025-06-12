@@ -264,7 +264,7 @@ const RealTimeInfo = () => {
   useEffect(() => {
     const connectWebSocket = () => {
       console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://localhost:4002";
+      const wsUrl = "ws://13.209.33.15t:4002";
       ws_Gps.current = new WebSocket(wsUrl);
   
       ws_Gps.current.onopen = () => {
