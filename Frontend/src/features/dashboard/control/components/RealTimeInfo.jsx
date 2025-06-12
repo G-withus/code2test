@@ -501,7 +501,9 @@ const RealTimeInfo = () => {
           <div className="w-full pt-1 pb-1 pl-3 pr-3 flex justify-between items-center bg-transparent shadow-md">
             <span className="font-semibold">GPS details</span>
             <div className="flex justify-center items-center gap-2">
-              <RxCross2 size={"20px"} onClick={() => setGpsDetails(!gpsDetails)} className="text-primary cursor-pointer" />
+              <RxCross2 size={"20px"} onClick={() => {setGpsDetails(!gpsDetails);
+                setSelectedDeviceId(null);
+              }} className="text-primary cursor-pointer" />
             </div>
             
           </div>
