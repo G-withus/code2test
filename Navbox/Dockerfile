@@ -12,7 +12,7 @@ RUN npm install --production
 COPY . .
 
 # Expose WebSocket server port
-EXPOSE 4001
+EXPOSE 4000-4050
 
 # Run the WebSocket server
 CMD ["node", "server.js"]
