@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 
-const WS_PORT = 4001;
+const WS_PORT = 4002;
 const WS_URL = `ws://0.0.0.0:${WS_PORT}`;
 const MAX_CLIENTS = 200;
 
