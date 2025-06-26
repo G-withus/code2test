@@ -1,157 +1,155 @@
-const WebSocket = require('ws');
-const fs = require('fs');
-const path = require('path');
+const WebSocket = require("ws");
+const logger = require("./logger");
 
-const WS_PORT = 4001;
-const WS_URL = `ws://0.0.0.0:${WS_PORT}`;
+const PORT_RANGE = { start: 4001, end: 4010 };
 const MAX_CLIENTS = 200;
+const FRONTEND_PORT = 4002;
 
-const LOG_FILE_PATH = path.join(__dirname, 'ships_log.jsonl');
-
-const wss = new WebSocket.Server({ host: '0.0.0.0', port: WS_PORT });
 let clients = [];
 let shipLocations = {};
-let lastValidDataTime = null; // Track last valid GPS data receipt
+let newDataReceived = false;
 
-wss.on('connection', function connection(ws) {
-  if (clients.length >= MAX_CLIENTS) {
-    console.log('Max clients (200) reached, rejecting new connection');
-    ws.close(1000, 'Maximum clients reached');
-    return;
-  }
+// Create WebSocket servers for each port in the range
+const wssServers = [];
+for (let port = PORT_RANGE.start; port <= PORT_RANGE.end; port++) {
+  const wss = new WebSocket.Server({ host: "0.0.0.0", port });
+  wssServers.push({ port, wss });
+}
 
-  console.log(`Client connected. Total clients: ${clients.length + 1}`);
-  clients.push(ws);
+wssServers.forEach(({ port, wss }) => {
+  wss.on("connection", function connection(ws) {
+    if (clients.length >= MAX_CLIENTS) {
+      logger.warn(
+        `Max clients (${MAX_CLIENTS}) reached on port ${port}, rejecting new connection`
+      );
+      ws.close(1000, "Maximum clients reached");
+      return;
+    }
 
-  ws.send(JSON.stringify({
-    type: 'welcome',
-    message: `Connected to WebSocket server at ${WS_URL}`,
-    clientCount: clients.length
-  }));
+    // Store the port with the client for filtering broadcasts
+    ws.port = port;
+    clients.push(ws);
+    console.log(
+      `Client connected on port ${port}. Total clients: ${clients.length}`
+    );
 
-  ws.on('message', function incoming(data) {
-    try {
-      const msg = JSON.parse(data);
-      if (msg.ship_id && Array.isArray(msg.gps_data) && msg.gps_data.length > 0) {
-        const validGpsData = msg.gps_data.filter(gpsEntry => 
-          typeof gpsEntry.latitude === 'number' && 
-          typeof gpsEntry.longitude === 'number' && 
-          gpsEntry.gps
-        ).map(gpsEntry => ({
-          gps: gpsEntry.gps,
-          latitude: gpsEntry.latitude,
-          longitude: gpsEntry.longitude,
-          altitude: gpsEntry.altitude ?? null,
-          speed: gpsEntry.speed ?? null,
-          satellites: gpsEntry.satellites ?? null,
-          satellite_prns: Array.isArray(gpsEntry.satellite_prns) ? gpsEntry.satellite_prns : []
-        }));
+    ws.send(
+      JSON.stringify({
+        type: "welcome",
+        message: `Connected to WebSocket server at ws://0.0.0.0:${port}`,
+        clientCount: clients.length,
+      })
+    );
 
-        if (validGpsData.length > 0) {
-          shipLocations[msg.ship_id] = {
-            timestamp: msg.timestamp || new Date().toISOString(),
-            ship_id: msg.ship_id,
-            device_id: msg.device_id || null,
-            heading: msg.heading ?? null,
-            gps_data: validGpsData
-          };
-          lastValidDataTime = Date.now(); // Update on valid data
-          console.log(`Received for ${msg.ship_id}:`, shipLocations[msg.ship_id]);
+    ws.on("message", function incoming(data) {
+      try {
+        const msg = JSON.parse(data);
+        if (
+          msg.ship_id &&
+          Array.isArray(msg.gps_data) &&
+          msg.gps_data.length > 0
+        ) {
+          const validGpsData = msg.gps_data
+            .filter((gpsEntry) => gpsEntry.gps)
+            .map((gpsEntry) => ({
+              gps: gpsEntry.gps,
+              latitude: gpsEntry.latitude,
+              longitude: gpsEntry.longitude,
+              altitude: gpsEntry.altitude ?? null,
+              speed: gpsEntry.speed ?? null,
+              satellites: gpsEntry.satellites ?? null,
+              satellite_prns: Array.isArray(gpsEntry.satellite_prns)
+                ? gpsEntry.satellite_prns
+                : [],
+            }));
+
+          if (validGpsData.length > 0) {
+            shipLocations[msg.ship_id] = {
+              timestamp: msg.timestamp || new Date().toISOString(),
+              ship_id: msg.ship_id,
+              device_id: msg.device_id || null,
+              heading: msg.heading ?? null,
+              gps_data: validGpsData,
+            };
+            newDataReceived = true;
+          } else {
+            logger.warn(`No valid GPS entries in message from ${msg.ship_id}`, {
+              gpsData: msg.gps_data,
+            });
+          }
         } else {
-          console.log(`No valid GPS entries in message from ${msg.ship_id}:`, msg.gps_data);
+          logger.warn("Invalid message structure", { message: msg });
         }
-      } else {
-        console.log('Invalid message structure:', msg);
+      } catch (error) {
+        console.log(`Error parsing message: ${error.message}`, { error });
       }
-    } catch (error) {
-      console.error('Error parsing message:', error);
-    }
+    });
+
+    ws.on("close", () => {
+      clients = clients.filter((client) => client !== ws);
+      console.log(
+        `Client disconnected from port ${port}. Total clients: ${clients.length}`
+      );
+    });
+
+    ws.on("error", (error) => {
+      console.log(`WebSocket error on port ${port}: ${error.message}`, {
+        error,
+      });
+      clients = clients.filter((client) => client !== ws);
+    });
   });
 
-  ws.on('close', () => {
-    clients = clients.filter(client => client !== ws);
-    console.log(`Client disconnected. Total clients: ${clients.length}`);
-    if (clients.length === 0) {
-      shipLocations = {};
-      lastValidDataTime = null;
-      console.log('All clients disconnected, cleared shipLocations and lastValidDataTime');
-    }
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-    clients = clients.filter(client => client !== ws);
-    console.log(`Client error, removed. Total clients: ${clients.length}`);
-    if (clients.length === 0) {
-      shipLocations = {};
-      lastValidDataTime = null;
-      console.log('All clients disconnected due to error, cleared shipLocations and lastValidDataTime');
-    }
-  });
+  console.log(`WebSocket server running at ws://0.0.0.0:${port}`);
 });
 
-// formatDate.js
 function formatLocalTime(timestamp) {
   const date = new Date(timestamp);
-
-  return new Intl.DateTimeFormat('en-GB', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  return new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
-    timeZoneName: 'short' // optional
+    timeZoneName: "short",
   }).format(date);
 }
 
-// Broadcast and log only if recent valid data exists
 setInterval(() => {
-  if (clients.length === 0) {
-    console.log('No clients connected, skipping broadcast and logging');
-    shipLocations = {};
-    lastValidDataTime = null;
-    return;
-  }
-
-  // Check if valid data was received within the last 5 seconds
-  if (!lastValidDataTime || (Date.now() - lastValidDataTime) > 5000) {
-    console.log('No recent valid GPS data, clearing shipLocations and skipping broadcast');
-    shipLocations = {};
-    return;
-  }
-
   let shipsArray = Object.values(shipLocations);
   if (shipsArray.length === 0) {
-    console.log('No ship data available, skipping broadcast and logging');
+    console.log("No ship data available, skipping broadcast and log.");
     return;
   }
 
-  shipsArray.sort((a, b) => a.ship_id.localeCompare(b.ship_id));
-  
   const packet = {
-    type: 'shipsUpdate',
+    type: "shipsUpdate",
     ships: shipsArray,
-    timestamp: formatLocalTime(Date.now())
+    timestamp: formatLocalTime(Date.now()),
   };
 
   const packetString = JSON.stringify(packet);
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
+  // Only send updates to clients connected on the frontend port (4002)
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client.port === FRONTEND_PORT) {
       client.send(packetString);
     }
   });
 
-  const logEntry = JSON.stringify({
-    ships: shipsArray,
-    timestamp: packet.timestamp
-  }) + '\n';
-  fs.appendFile(LOG_FILE_PATH, logEntry, err => {
-    if (err) {
-      console.error('Error writing to log file:', err);
-    }
-  });
+  if (newDataReceived) {
+    logger.info("Logging ship data", {
+      ships: shipsArray,
+      timestamp: packet.timestamp,
+    });
+    newDataReceived = false;
+  } else {
+    console.log("No new ship data received, skipping log.");
+  }
 }, 1000);
+<<<<<<< HEAD
 
 console.log(`WebSocket server running at ${WS_URL}`);
+=======
+>>>>>>> fe2cde3014da748b4af69a1ce9028dc1182361a7
