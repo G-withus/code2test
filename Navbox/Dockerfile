@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 4001
 
 # Run the WebSocket server
-CMD ["node", "server.js"]
+CMD ["node", "server2.js"]
