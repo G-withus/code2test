@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy package.json and install only production dependencies
 COPY package*.json ./
 RUN npm install --production
+RUN npm install winston
 
 # Copy the rest of your application
 COPY . .
