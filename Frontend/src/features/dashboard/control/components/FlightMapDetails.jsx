@@ -53,28 +53,24 @@ const VideoViewer = ({setVideoView, systemID}) => {
       return null;
     }
 
-    // State for each video's zoom and position
-    const [video1State, setVideo1State] = useState({ scale: 1, x: 0, y: 0 });
-    const [video2State, setVideo2State] = useState({ scale: 1, x: 0, y: 0 });
-   
-        const remoteVideoRef = useRef(null);
-    const remoteVideoRef2 = useRef(null);
-    const [status, setStatus] = useState('Initializing...');
-    const [error, setError] = useState('');
+     const [status, setStatus] = useState("Initializing...");
+    const [error, setError] = useState(null);
+
     const janusRef = useRef(null);
-    const streamingRef = useRef(null);
-    const remoteStreamRef = useRef(null);
+    const pluginRef = useRef(null);
+    const remoteVideoRef = useRef(null);
+    const remoteVideoRef2 = useRef(null);
+    const streamRef = useRef(null);
+
+    const mid = "v" + systemID.toString().padStart(3, "0");
     const server = "ws://43.200.134.76:8188"; // Janus WebSocket Server
     const streamId = 1234;
     const secret = "adminpwd";
-    const mountpointName = "Drone Video Stream";
-    console.log(remoteVideoRef.current);
+
     const videoRefs = [useRef(null), useRef(null)];
     const isDragging = useRef(false);
     const lastPosition = useRef({ x: 0, y: 0 });
     const [drones, setDrones] = useState({});
-    const [lat, setLat] = useState("");
-    const [lon, setLon] = useState("");
     const [shipPosition, setShipPosition] = useState(null);
     const reconnectInterval = useRef(null);
     const [wayPointsVisible, setWayPointsVisible] = useState(false);
@@ -138,118 +134,123 @@ const VideoViewer = ({setVideoView, systemID}) => {
   useEffect(() => {
     const adapterScript = document.createElement("script");
     adapterScript.src = "/adapter-latest.js";
-    adapterScript.onload = loadJanus;
-    document.body.appendChild(adapterScript);
-    function loadJanus() {
+    adapterScript.onload = () => {
       const janusScript = document.createElement("script");
       janusScript.src = "/janus.js";
       janusScript.onload = initializeJanus;
       document.body.appendChild(janusScript);
-    }
-    function initializeJanus() {
-      window.Janus.init({
-        debug: "warn",
-        callback: function () {
-          if (!window.Janus.isWebrtcSupported()) {
-            setError("WebRTC not supported by this browser");
-            return;
-          }
-          janusRef.current = new window.Janus({
-            server: server,
-            success: function () {
-              setStatus("Connected to Janus server");
-              attachToStreamingPlugin();
-            },
-            error: function (err) {
-              setError(`Connection failed: ${err}`);
-            },
-          });
-        },
-      });
-    }
-    function attachToStreamingPlugin() {
-      janusRef.current.attach({
-        plugin: "janus.plugin.streaming",
-        opaqueId: `streaming-${streamId}-${window.Janus.randomString(12)}`,
-        success: function (pluginHandle) {
-          streamingRef.current = pluginHandle;
-          setStatus(`Connected to ${mountpointName}`);
-          startWatching();
-        },
-        error: function (error) {
-          setError(`Plugin error: ${error}`);
-        },
-        onmessage: function (msg, jsep) {
-          if (msg.error) {
-            setError(msg.error);
-            return;
-          }
-          if (msg.result && msg.result.status) {
-            setStatus(`Stream status: ${msg.result.status}`);
-          }
-          if (jsep) {
-            streamingRef.current.createAnswer({
-              jsep: jsep,
-              tracks: [{ type: "video", recv: true }],
-              success: function (jsepAnswer) {
-                streamingRef.current.send({
-                  message: { request: "start" },
-                  jsep: jsepAnswer,
-                });
-              },
-              error: function (error) {
-                setError(`WebRTC error: ${error}`);
-              },
-            });
-          }
-        },
-        onremotetrack: function (track, mid, on) {
-          if (!remoteStreamRef.current) {
-            remoteStreamRef.current = new MediaStream();
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStreamRef.current;
-            }
-          }
-          if (on) {
-            remoteStreamRef.current.addTrack(track);
-            setStatus(`Stream ${mid} playing`);
-          } else {
-            remoteStreamRef.current.removeTrack(track);
-          }
-        },
-        oncleanup: function () {
-          setStatus("Stream disconnected");
-          remoteStreamRef.current = null;
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = null;
-          }
-        },
-      });
-    }
-    function startWatching() {
-      streamingRef.current.send({
-        message: {
-          request: "watch",
-          id: streamId,
-          secret: secret,
-          offer_audio: false,
-          offer_video: true,
-        },
-        success: function () {
-          setStatus("Requesting stream...");
-        },
-        error: function (error) {
-          setError(`Watch error: ${error}`);
-        },
-      });
-    }
+    };
+    document.body.appendChild(adapterScript);
+
     return () => {
-      if (janusRef.current) {
-        janusRef.current.destroy();
-      }
+      if (janusRef.current) janusRef.current.destroy();
       document.body.removeChild(adapterScript);
     };
   }, [systemID]);
+
+  const initializeJanus = () => {
+    window.Janus.init({
+      debug: "warn",
+      callback: () => {
+        if (!window.Janus.isWebrtcSupported()) {
+          setError("WebRTC not supported by this browser.");
+          return;
+        }
+
+        janusRef.current = new window.Janus({
+          server,
+          success: () => attachPlugin(),
+          error: (err) => setError(`Janus error: ${err}`),
+        });
+      },
+    });
+  };
+
+  const attachPlugin = () => {
+    janusRef.current.attach({
+      plugin: "janus.plugin.streaming",
+      opaqueId: `stream-${mid}-${window.Janus.randomString(8)}`,
+      success: (handle) => {
+        pluginRef.current = handle;
+        setStatus(`Attached. Watching drone ${systemID} (mid=${mid})`);
+        handle.send({
+          message: {
+            request: "watch",
+            id: streamId,
+            mid: mid,
+            secret,
+            offer_audio: false,
+            offer_video: true,
+          },
+        });
+      },
+      error: (err) => setError(`Plugin attach failed: ${err}`),
+      onmessage: (msg, jsep) => {
+        if (msg.error) {
+          setError(msg.error);
+          return;
+        }
+        if (jsep) {
+          pluginRef.current.createAnswer({
+            jsep,
+            tracks: [{ type: "video", mid: mid, recv: true }],
+            success: (jsepAnswer) => {
+              pluginRef.current.send({
+                message: { request: "start" },
+                jsep: jsepAnswer,
+              });
+            },
+            error: (err) => setError(`WebRTC answer error: ${err}`),
+          });
+        }
+      },
+      onremotetrack: (track, incomingMid, on) => {
+        if (incomingMid !== mid) return;
+
+        if (!streamRef.current) {
+          streamRef.current = new MediaStream();
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = streamRef.current;
+          if (remoteVideoRef2.current) remoteVideoRef2.current.srcObject = streamRef.current;
+        }
+
+        if (on) {
+          streamRef.current.addTrack(track);
+        } else {
+          streamRef.current.removeTrack(track);
+        }
+      },
+      oncleanup: () => {
+        setStatus("Stream stopped.");
+        streamRef.current = null;
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+        if (remoteVideoRef2.current) remoteVideoRef2.current.srcObject = null;
+      },
+    });
+  };
+
+  useEffect(() => {
+    const socket = io('http://192.168.72.132:5000',{
+            query:{
+                user:'dest',
+                did:'drone_01',
+            }
+        });
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    socket.on('server_response', (data) => {
+      if (data?.status && data?.detections) {
+        console.log('Received detections:', data.detections);
+        setDetections(data.detections);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
       
     
       const ws = useRef(null);
