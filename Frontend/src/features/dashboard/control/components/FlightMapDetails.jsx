@@ -384,71 +384,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
         });
       
 
-    // Handle zoom for each video
-    const handleWheelZoom = (event, videoIndex) => {
-        event.preventDefault();
-        const zoomFactor = 0.1;
-        const maxScale = 3;
-        const minScale = 1;
-
-        if (videoIndex === 0) {
-            setVideo1State((prev) => {
-                const newScale = event.deltaY < 0 ? prev.scale + zoomFactor : prev.scale - zoomFactor;
-                return { ...prev, scale: Math.max(minScale, Math.min(newScale, maxScale)) };
-            });
-        } else {
-            setVideo2State((prev) => {
-                const newScale = event.deltaY < 0 ? prev.scale + zoomFactor : prev.scale - zoomFactor;
-                return { ...prev, scale: Math.max(minScale, Math.min(newScale, maxScale)) };
-            });
-        }
-    };
-
-    // Handle dragging (pan) for each video when zoomed in
-    const handleMouseDown = (event, videoIndex) => {
-        if ((videoIndex === 0 && video1State.scale > 1) || (videoIndex === 1 && video2State.scale > 1)) {
-            isDragging.current = { videoIndex, active: true };
-            lastPosition.current = { x: event.clientX, y: event.clientY };
-        }
-    };
-
-    const handleMouseMove = (event) => {
-        if (isDragging.current?.active) {
-            const videoIndex = isDragging.current.videoIndex;
-            const dx = event.clientX - lastPosition.current.x;
-            const dy = event.clientY - lastPosition.current.y;
-
-            if (videoIndex === 0) {
-                setVideo1State((prev) => ({
-                    ...prev,
-                    x: prev.x + dx,
-                    y: prev.y + dy,
-                }));
-            } else {
-                setVideo2State((prev) => ({
-                    ...prev,
-                    x: prev.x + dx,
-                    y: prev.y + dy,
-                }));
-            }
-
-            lastPosition.current = { x: event.clientX, y: event.clientY };
-        }
-    };
-
-    const handleMouseUp = () => {
-        isDragging.current = { videoIndex: null, active: false };
-    };
-
-    // Reset zoom for a specific video
-    const resetZoom = (videoIndex) => {
-        if (videoIndex === 0) {
-            setVideo1State({ scale: 1, x: 0, y: 0 });
-        } else {
-            setVideo2State({ scale: 1, x: 0, y: 0 });
-        }
-    };
-
    const [formattedTime, setFormattedTime] = useState("");
     const formatTimestamp = (timestamp) => {
         const date = new Date(timestamp);
@@ -484,12 +419,6 @@ const VideoViewer = ({setVideoView, systemID}) => {
                 {/* Video 1 */}
                 <div
                     className="w-1/2 h-full overflow-hidden flex justify-center items-center"
-                    onWheel={(e) => handleWheelZoom(e, 0)}
-                    onMouseDown={(e) => handleMouseDown(e, 0)}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    onDoubleClick={() => resetZoom(0)}
                 >
                     <video
                         ref={remoteVideoRef}
