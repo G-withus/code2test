@@ -427,10 +427,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
                         controls
                         playsInline 
                         className="cursor-grab w-full h-full object-fill"
-                        style={{
-                            transform: `scale(${video1State.scale}) translate(${video1State.x}px, ${video1State.y}px)`,
-                            transition: "transform 0.1s ease-out",
-                        }}
+                        
                     ></video>  
                 </div>
 
