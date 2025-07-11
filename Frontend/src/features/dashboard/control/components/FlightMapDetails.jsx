@@ -228,29 +228,29 @@ const VideoViewer = ({setVideoView, systemID}) => {
     });
   };
 
-  useEffect(() => {
-    const socket = io('http://192.168.72.132:5000',{
-            query:{
-                user:'dest',
-                did:'drone_01',
-            }
-        });
+  // useEffect(() => {
+  //   const socket = io('http://192.168.72.132:5000',{
+  //           query:{
+  //               user:'dest',
+  //               did:'drone_01',
+  //           }
+  //       });
 
-    socket.on('connect', () => {
-      console.log('Connected to server');
-    });
+  //   socket.on('connect', () => {
+  //     console.log('Connected to server');
+  //   });
 
-    socket.on('server_response', (data) => {
-      if (data?.status && data?.detections) {
-        console.log('Received detections:', data.detections);
-        setDetections(data.detections);
-      }
-    });
+  //   socket.on('server_response', (data) => {
+  //     if (data?.status && data?.detections) {
+  //       console.log('Received detections:', data.detections);
+  //       setDetections(data.detections);
+  //     }
+  //   });
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
       
     
       const ws = useRef(null);
