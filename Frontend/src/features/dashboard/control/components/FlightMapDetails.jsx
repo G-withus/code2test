@@ -63,7 +63,7 @@ const VideoViewer = ({setVideoView, systemID}) => {
     const streamRef = useRef(null);
 
     const mid = "v" + systemID.toString().padStart(3, "0");
-    const server = "ws://43.200.134.76:8188"; // Janus WebSocket Server
+    const server = "ws://3.36.62.85:8188"; // Janus WebSocket Server
     const streamId = 1234;
     const secret = "adminpwd";
 
