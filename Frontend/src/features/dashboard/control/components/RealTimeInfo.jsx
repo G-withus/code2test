@@ -247,97 +247,80 @@ const RealTimeInfo = () => {
     }
   ];
 
-  useEffect(() => {
-    if (!selectedDeviceId) return;
-  
-    const matchedShip = allShips.find(ship => ship.device_id === selectedDeviceId);
-    if (matchedShip) {
-      setSelectedGpsShip(matchedShip);
-    }
-  }, [allShips, selectedDeviceId]);
+ useEffect(() => {
+  const connectWebSocket = () => {
+    console.log("Attempting WebSocket connection...");
+    const wsUrl = "ws://13.209.33.15:4002";
+    ws_Gps.current = new WebSocket(wsUrl);
 
-  console.log("Selected GPS Ship:", selectedGpsShip);
-  
-
-  const topGpsData =
-  selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
-    ? selectedGpsShip.gps_data.find(item => item.gps === "top_gps")
-    : null;
-
-  console.log(topGpsData)
-
-    const bottomGpsData =
-    selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
-      ? selectedGpsShip.gps_data.find(item => item.gps === "bottom_gps")
-      : null;
-  console.log(bottomGpsData)
-
-  useEffect(() => {
-    const connectWebSocket = () => {
-      console.log("Attempting WebSocket connection...");
-      const wsUrl = "ws://13.209.33.15:4002";
-      ws_Gps.current = new WebSocket(wsUrl);
-  
-      ws_Gps.current.onopen = () => {
-        console.log("WebSocket connected.");
-        if (reconnectGpsInterval.current) {
-          clearInterval(reconnectGpsInterval.current);
-          reconnectGpsInterval.current = null;
-        }
-      };
-  
-      ws_Gps.current.onmessage = (event) => {
-        clearTimeout(timeoutRef.current);
-  
-        try {
-          const message = JSON.parse(event.data);
-          console.log(message);
-  
-          if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
-            message.ships.forEach(ship => {
-              updateShipTargets(ship);
-            });
-            setAllShips(prevShips => {
-              return message.ships.map(newShip => {
-                const existingShip = prevShips.find(s => s.device_id === newShip.device_id);
-  
-                if (existingShip) {
-                  return {
-                    ...newShip,
-                    heading: newShip.heading !== null ? newShip.heading : existingShip.heading,
-                  };
-                } else {
-                  return newShip;
-                }
-              });
-            });
-          }
-        } catch (err) {
-          console.error("Error parsing WebSocket data:", err);
-        }
-      };
-  
-      ws_Gps.current.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-  
-      ws_Gps.current.onclose = () => {
-        console.warn("WebSocket disconnected. Attempting reconnect...");
-        if (!reconnectGpsInterval.current) {
-          reconnectGpsInterval.current = setInterval(connectWebSocket, 5000);
-        }
-      };
-    };
-  
-    connectWebSocket();
-  
-    return () => {
-      if (ws_Gps.current) ws_Gps.current.close();
-      if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
+    const startDataTimeout = () => {
       clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        console.warn("No data received within timeout. Clearing allShips.");
+        setAllShips([]);
+      }, 5000); // Adjust timeout duration as needed
     };
-  }, []);  
 
+    ws_Gps.current.onopen = () => {
+      console.log("WebSocket connected.");
+      if (reconnectGpsInterval.current) {
+        clearInterval(reconnectGpsInterval.current);
+        reconnectGpsInterval.current = null;
+      }
+      startDataTimeout();
+    };
+
+    ws_Gps.current.onmessage = (event) => {
+      startDataTimeout(); // Reset timeout on every message
+
+      try {
+        const message = JSON.parse(event.data);
+        console.log(message);
+
+        if (message.type === "shipsUpdate" && Array.isArray(message.ships)) {
+          message.ships.forEach(ship => updateShipTargets(ship));
+
+          setAllShips(prevShips => {
+            return message.ships.map(newShip => {
+              const existingShip = prevShips.find(s => s.device_id === newShip.device_id);
+
+              if (existingShip) {
+                return {
+                  ...newShip,
+                  heading: newShip.heading !== null ? newShip.heading : existingShip.heading,
+                };
+              } else {
+                return newShip;
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error("Error parsing WebSocket data:", err);
+      }
+    };
+
+    ws_Gps.current.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    ws_Gps.current.onclose = () => {
+      console.warn("WebSocket disconnected. Attempting reconnect...");
+      if (!reconnectGpsInterval.current) {
+        reconnectGpsInterval.current = setInterval(connectWebSocket, 5000);
+      }
+    };
+  };
+
+  connectWebSocket();
+
+  return () => {
+    if (ws_Gps.current) ws_Gps.current.close();
+    if (reconnectGpsInterval.current) clearInterval(reconnectGpsInterval.current);
+    clearTimeout(timeoutRef.current);
+  };
+}, []);
+  
   console.log(allShips);
 
   const handleSelectedDrone = (systemID) => {
