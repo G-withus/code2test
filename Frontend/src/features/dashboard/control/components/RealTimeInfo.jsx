@@ -245,6 +245,31 @@ const RealTimeInfo = () => {
     }
   ];
 
+  useEffect(() => {
+    if (!selectedDeviceId) return;
+  
+    const matchedShip = allShips.find(ship => ship.device_id === selectedDeviceId);
+    if (matchedShip) {
+      setSelectedGpsShip(matchedShip);
+    }
+  }, [allShips, selectedDeviceId]);
+
+  console.log("Selected GPS Ship:", selectedGpsShip);
+  
+
+  const topGpsData =
+  selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
+    ? selectedGpsShip.gps_data.find(item => item.gps === "top_gps")
+    : null;
+
+  console.log(topGpsData)
+
+    const bottomGpsData =
+    selectedGpsShip && Object.keys(selectedGpsShip) && Array.isArray(selectedGpsShip.gps_data)
+      ? selectedGpsShip.gps_data.find(item => item.gps === "bottom_gps")
+      : null;
+  console.log(bottomGpsData)
+
  useEffect(() => {
   const connectWebSocket = () => {
     console.log("Attempting WebSocket connection...");
@@ -327,11 +352,6 @@ const RealTimeInfo = () => {
     setSelectedDrone(clickedDrone);
   };
 
-  const setShipByDeviceId = (deviceID) => {
-    const shipList = allShips;
-    const clickedship = shipList.find(ship => ship.device_id === deviceID) || null;
-    setSelectedGpsShip(clickedship);
-  };
 
   const [smoothPositions, setSmoothPositions] = useState({});
   const [smoothHeadings, setSmoothHeadings] = useState({});
@@ -645,7 +665,6 @@ const RealTimeInfo = () => {
                   }}
                   onMouseOver={() => {setSelectedDeviceId(ship.device_id);
                     setGpsDetails(true);
-                    setShipByDeviceId(ship.device_id)
                   }}
                 />
                 ))}
