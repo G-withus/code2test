@@ -6,12 +6,12 @@ import { RxCross2 } from "react-icons/rx";
 import { IoInformationCircle } from "react-icons/io5";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FlightMapDetails from "./FlightMapDetails";
-import { IoMdSearch } from "react-icons/io";
-import { AiOutlineMenu } from "react-icons/ai";
-import { FaMap } from "react-icons/fa";
-import { BsFillPrinterFill } from "react-icons/bs";
-import useTranslations from "../../../../components/Language";
-import Footer from "../../../../components/Footer";
+// import { IoMdSearch } from "react-icons/io";
+// import { AiOutlineMenu } from "react-icons/ai";
+// import { FaMap } from "react-icons/fa";
+// import { BsFillPrinterFill } from "react-icons/bs";
+// import useTranslations from "../../../../components/Language";
+// import Footer from "../../../../components/Footer";
 
 
 const RealTimeInfo = () => {
@@ -27,6 +27,10 @@ const RealTimeInfo = () => {
   const [systemID, setSystemID] = useState("");
   const [shipPosition, setShipPosition] = useState([]);
   const reconnectInterval = useRef(null);
+  const [videoView, setVideoView] = useState(false);
+  const [shipDetails, setShipDetails] = useState(false);
+  const [gpsDetails, setGpsDetails] = useState(true);
+  const searchRef = useRef(null);
 
   // console.log(selectedDrone)
 
@@ -209,12 +213,6 @@ const RealTimeInfo = () => {
     };
   }, []);
   
-  
-  const [videoView, setVideoView] = useState(false);
-    const [shipDetails, setShipDetails] = useState(false);
-  const [gpsDetails, setGpsDetails] = useState(false);
-
-  const searchRef = useRef(null);
 
   const shipData = [
     {
@@ -638,7 +636,7 @@ const RealTimeInfo = () => {
               ))}
               {allShips.length > 0 && allShips.map((ship, index) =>  (
                   <SmoothMarker
-                  key={ship.device_id}
+                  key={index}
                   ship={ship}
                   carIcon={carIcon}
                   onClick={() => {
@@ -647,6 +645,7 @@ const RealTimeInfo = () => {
                   }}
                   onMouseOver={() => {setSelectedDeviceId(ship.device_id);
                     setGpsDetails(true);
+                    setShipByDeviceId(ship.device_id)
                   }}
                 />
                 ))}
